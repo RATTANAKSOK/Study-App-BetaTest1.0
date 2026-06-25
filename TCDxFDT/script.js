@@ -70,17 +70,10 @@ function syncAppState() {
 function addPoints(amount, reason) {
     if (!u || !userDB[u]) return;
 
-    // 1. Calculate the final amount
-    // If reason is "Daily", we ensure it's exactly 100
-    let finalAmount = (reason === "Daily") ? 0 : amount;
-    
-    // 2. Add ONLY to the userDB object
+    const finalAmount = amount;
     userDB[u].points += finalAmount;
 
-    // 3. Save everything and update the screen
     saveAndSync(); 
-    
-    // 4. Feedback
     showAlert(`Earned ${finalAmount} PTS for: ${reason}`);
     triggerPointAnim(finalAmount, false);
 }
@@ -162,43 +155,34 @@ function navigateTo(viewId, tabElement) {
 
     const quiz_var = document.getElementById('vQuiz')
     
-    if (viewId === 'vQuiz') {
-        quiz_var.classList.remove('hidden')
-    } else {
-        quiz_var.classList.add('hidden')
+    if (quiz_var) {
+        if (viewId === 'vQuiz') quiz_var.classList.remove('hidden'); else quiz_var.classList.add('hidden');
     }
 
-    const activePanel = document.getElementById(`${viewId}View`);
-    if (activePanel) activePanel.classList.remove('hidden');
-
     const game_var = document.getElementById('vGames')
-
-    if (viewId === 'vGames') {
-        game_var.classList.remove('hidden')
-    } else {
-        game_var.classList.add('hidden')
+    if (game_var) {
+        if (viewId === 'vGames') game_var.classList.remove('hidden'); else game_var.classList.add('hidden');
     }
 
     const lobby_view = document.getElementById('QuickReactionLobbyView')
-
-    if (viewId === 'QuickReactionLobbyView') {
-        lobby_view.classList.remove('hidden')
-    } else {
-        lobby_view.classList.add('hidden')
+    if (lobby_view) {
+        if (viewId === 'QuickReactionLobbyView') lobby_view.classList.remove('hidden'); else lobby_view.classList.add('hidden');
     }
 
     const startgame_view = document.getElementById('QuickReactionGameView')
-
-    if (viewId === 'QuickReactionGameView') {
-        startgame_view.classList.remove('hidden')
-    } else {
-        startgame_view.classList.add('hidden')
+    if (startgame_view) {
+        if (viewId === 'QuickReactionGameView') startgame_view.classList.remove('hidden'); else startgame_view.classList.add('hidden');
     }
     
     // Clear intervals if navigating away from game rooms unexpectedly
     if (viewId === 'QuickReactionGameView') {
         clearInterval(qrTimerInstance);
         qrIsFrozen = false;
+    }
+
+    const startcw_view = document.getElementById('CrosswordGameView')
+    if (startcw_view) {
+        if (viewId === 'CrosswordGameView') startcw_view.classList.remove('hidden'); else startcw_view.classList.add('hidden');
     }
 
     syncPointsUI();
@@ -247,18 +231,9 @@ function handleLogin() {
         saveAndSync();
         document.getElementById('authLayer').classList.add('hidden');
         document.getElementById('appLayer').classList.remove('hidden');
-    } else { showAlert("Invalid credentials!"); }
-}
-
- 
-// 5. SMART LIBRARY & CRAWLER (RESTORED)
- 
-function openSubject(subject) {
-    const topics = knowledgeBase[subject]?.[userDB[u].grade] || [];
-    document.getElementById('subjectLibrary').classList.add('hidden');
-    document.getElementById('topicView').classList.remove('hidden');
-    document.getElementById('activeSubjectDisplay').innerText = `${subject} (Grade ${userDB[u].grade})`;
-    renderTopics(topics);
+    } else {
+        showAlert("Invalid credentials!");
+    }
 }
 
 function closeTopicView() {
@@ -277,10 +252,37 @@ function renderTopics(topics) {
         list.innerHTML = topics.map(t => `
             <div class="grid-item">
                 <h3>${t}</h3>
-                <button onclick="triggerCrawler('${t}')">LEARN</button>
+                <button class="btn-learn" data-learn-topic="${t.replace(/"/g, '&quot;')}">LEARN</button>
             </div>
         `).join('');
     }
+}
+
+function openSubject(subject) {
+    const grade = (userDB[u] && userDB[u].grade) ? String(userDB[u].grade) : '9';
+    const listEl = document.getElementById('topicList');
+    const subjLib = document.getElementById('subjectLibrary');
+    const topicView = document.getElementById('topicView');
+    const activeDisplay = document.getElementById('activeSubjectDisplay');
+
+    // Get topics for this subject and the user's grade; fallback to combined list
+    let topics = (knowledgeBase[subject] && knowledgeBase[subject][grade]) ? knowledgeBase[subject][grade].slice() : [];
+    if (!topics || topics.length === 0) {
+        // Try aggregating across grades
+        if (knowledgeBase[subject]) {
+            Object.keys(knowledgeBase[subject]).forEach(g => {
+                topics = topics.concat(knowledgeBase[subject][g] || []);
+            });
+        }
+    }
+
+    if (!listEl || !topicView || !subjLib) return;
+
+    subjLib.classList.add('hidden');
+    topicView.classList.remove('hidden');
+    if (activeDisplay) activeDisplay.innerText = subject;
+
+    renderTopics(topics || []);
 }
 
 const lessonRepo = {
@@ -618,14 +620,14 @@ function triggerCrawler(topic) {
                     style="padding: 12px 20px; border-radius: 50px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); font-weight: 600; cursor: pointer; transition: 0.3s;"
                     onmouseover="this.style.backgroundColor='rgba(255,255,255,0.2)'"
                     onmouseout="this.style.backgroundColor='rgba(255,255,255,0.1)'"
-                    onclick="exploreMore('${topic.replace(/'/g, "\\'")}')">
+                    data-action="exploreMore" data-explore-topic="${topic.replace(/'/g, "\\'")}">
                     🔍 EXPLORE MORE
                 </button>
 
                 <div style="text-align:center; padding: 40px 20px;">
                     <button class="btn-primary" 
-                            style="width: 100%; max-width: 300px; padding: 15px; border-radius: 50px; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; border: none;"
-                            onclick="finishLesson()">
+                            style="max-width: 300px; padding: 15px; border-radius: 50px; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; border: none;"
+                            data-finish-lesson="${topic.replace(/'/g, "\\'")}">
                         FINISH LESSON & CLAIM 50 PTS
                     </button>
                 </div>
@@ -644,91 +646,146 @@ function exploreMore(topic) {
 }
 
 // Helper function to handle the reward
-function finishLesson(topicName, topic) {
-    addPoints(50, `Completed ${topicName}`); // Adds the 50 points
+function finishLesson(topicName) {
+    addPoints(50, `Completed ${topicName || 'Lesson'}`);
     showAlert(`Lesson Complete! You earned 50 Study Points.`);
-    navigateTo('vEbooks'); // Send them back to the library
-    `QuizAI.generate(topic);`
+    navigateTo('vEbooks');
+    if (topicName && typeof QuizAI !== 'undefined' && typeof QuizAI.generate === 'function') {
+        QuizAI.generate(topicName);
+    }
 }
 
-function openSubject(subject) {
-    const userGrade = userDB[u].grade;
-    const topics = knowledgeBase[subject]?.[userGrade] || [];
-    
-    // Ensure the library containers toggle correctly
-    const lib = document.getElementById('subjectLibrary');
-    const tv = document.getElementById('topicView');
-    
-    if (lib) lib.classList.add('hidden');
-    if (tv) tv.classList.remove('hidden');
-    
-    const display = document.getElementById('activeSubjectDisplay');
-    if (display) display.innerText = `${subject} - Grade ${userGrade}`;
-    
-    renderTopics(topics);
-}
+// Duplicate openSubject removed: original definition preserved earlier in the file.
 
 
 // 6. SHOP & VISUALS
  
 function handleItemAction(itemId, cost) {
     let user = userDB[u];
+    if (!user.inventory) user.inventory = [];
+    
     if (user.inventory.includes(itemId)) {
         user.equippedItem = (user.equippedItem === itemId) ? null : itemId;
     } else if (Number(user.points) >= Number(cost)) {
         user.points -= cost;
         user.inventory.push(itemId);
         user.equippedItem = itemId;
-        triggerPointAnim(cost, true);
+        if (typeof triggerPointAnim === 'function') triggerPointAnim(cost, true);
     } else return showAlert("Not enough points!");
+    
     saveAndSync();
+    updateVisuals(); 
+    refreshShopButtons();
 }
 
-`function handleGlowAction(glowId, cost) {
+function handleGlowAction(glowId, cost) {
     let user = userDB[u];
+    if (!user) return;
+    if (!user.inventory) user.inventory = [];
+    
     if (user.inventory.includes(glowId)) {
         user.activeGlow = (user.activeGlow === glowId) ? null : glowId;
     } else if (Number(user.points) >= Number(cost)) {
         user.points -= cost;
         user.inventory.push(glowId);
         user.activeGlow = glowId;
-        triggerPointAnim(cost, true);
+        if (typeof triggerPointAnim === 'function') triggerPointAnim(cost, true);
     } else return showAlert("Not enough points!");
+    
     saveAndSync();
-}`
+    updateVisuals(); 
+    refreshShopButtons();
+}
 
 function handleThemeAction(themeId, cost) {
     let user = userDB[u];
+    if (!user.unlockedThemes) user.unlockedThemes = [];
+    
     if (user.unlockedThemes.includes(themeId)) {
         user.activeTheme = (user.activeTheme === themeId) ? 'default' : themeId;
     } else if (Number(user.points) >= Number(cost)) {
         user.points -= cost;
         user.unlockedThemes.push(themeId);
         user.activeTheme = themeId;
-        triggerPointAnim(cost, true);
+        if (typeof triggerPointAnim === 'function') triggerPointAnim(cost, true);
     } else return showAlert("Not enough points!");
+    
     saveAndSync();
+    updateVisuals(); 
+    refreshShopButtons();
 }
 
 function refreshShopButtons() {
     const user = userDB[u];
-    ['crown', 'gold_glow', 'blue_glow', 'red_theme'].forEach(id => {
+    if (!user) return;
+    if (!user.inventory) user.inventory = [];
+    if (!user.unlockedThemes) user.unlockedThemes = [];
+
+    // FIXED: Swapped 'crown' out for 'custom_cursor' to avoid broken DOM searches
+    ['custom_cursor', 'gold_glow', 'blue_glow', 'red_theme'].forEach(id => {
         const btn = document.getElementById(`btn-${id}`);
         if (!btn) return;
+        
         const owned = user.inventory.includes(id) || user.unlockedThemes.includes(id);
-        if (!owned) btn.innerText = "Buy";
-        else btn.innerText = (user.equippedItem === id || user.activeTheme === id || user.activeGlow === id) ? "Unequip" : "Equip";
+        if (!owned) {
+            btn.innerText = "Buy";
+        } else {
+            const isEquipped = (user.equippedItem === id || user.activeTheme === id || user.activeGlow === id);
+            btn.innerText = isEquipped ? "Unequip" : "Equip";
+        }
     });
 }
 
 function updateVisuals() {
     const user = userDB[u];
-    const crown = document.getElementById('charEffect');
-    const avatar = document.getElementById('user-avatar');
-    if (crown) (user.equippedItem === 'crown') ? crown.classList.remove('hidden') : crown.classList.add('hidden');
+    if (!user) return;
+
+    // --- 1. Custom Cursor Engine Layer ---
+    if (user.equippedItem === 'custom_cursor') {
+        document.body.classList.add('use-custom-cursor');
+    } else {
+        document.body.classList.remove('use-custom-cursor');
+    }
+
+    // --- 2. Dynamic Theme & Golden Aura Background System ---
+    const root = document.documentElement;
+    
+    if (user.activeTheme === 'red_theme') {
+        // Red Theme baseline structural layout
+        root.style.setProperty('--primary', '#ff4d4d');
+        root.style.setProperty('--bg-grad', 'linear-gradient(180deg, #4d0000 0%, #000 100%)');
+        document.body.classList.add('theme-red');
+    } else {
+        // Clear Red Theme baseline flags safely
+        document.body.classList.remove('theme-red');
+        root.style.setProperty('--primary', '#00d4ff');
+
+        if (user.activeGlow === 'gold_glow') {
+            // Apply golden gradient smoothly when active without clashing into Red Void
+            root.style.setProperty('--bg-grad', 'linear-gradient(135deg, #1a252f 0%, #2c3e50 50%, #d4ac0d 100%)');
+        } else {
+            // Fallback default setup configuration base layout 
+            root.style.setProperty('--bg-grad', 'linear-gradient(180deg, #1a1a2e 0%, #000 100%)');
+        }
+    }
+
+    // --- 3. Dynamic Aura Cursor Blur Ring Elements Injection ---
+    let trail = document.getElementById('cw-gold-aura-trail');
+    if (user.activeGlow === 'gold_glow') {
+        if (!trail) {
+            trail = document.createElement('div');
+            trail.id = 'cw-gold-aura-trail';
+            document.body.appendChild(trail);
+        }
+    } else if (trail) {
+        trail.remove();
+    }
+
+    // --- 4. Retrofit Core Character Avatars updates ---
+    const avatar = document.getElementById('avatarDisplay');
     if (avatar) {
         avatar.classList.remove('gold_glow-active', 'blue_glow-active');
-        if (user.activeGlow) avatar.classList.add(user.activeGlow + "-active");
+        if (user.activeGlow) avatar.classList.add(`${user.activeGlow}-active`);
     }
 }
 
@@ -737,16 +794,22 @@ function updateAvatarGender() {
     if (charBase && userDB[u]) charBase.src = (userDB[u].gender === 'female') ? "woman.png" : "man.png";
 }
 
+// Deprecated or combined into updateVisuals tracking logic blocks smoothly
 function applyTheme(themeId) {
-    const root = document.documentElement;
-    if (themeId === 'red_theme') {
-        root.style.setProperty('--primary', '#ff4d4d');
-        root.style.setProperty('--bg-grad', 'linear-gradient(180deg, #4d0000 0%, #000 100%)');
-    } else {
-        root.style.setProperty('--primary', '#00d4ff');
-        root.style.setProperty('--bg-grad', 'linear-gradient(180deg, #1a1a2e 0%, #000 100%)');
+    if (userDB[u]) {
+        userDB[u].activeTheme = themeId;
+        updateVisuals();
     }
 }
+
+// ATTACH GLOBAL MOUSETRACKING COORD HOOK FOR ACTIVE GLOW TRAILS
+document.addEventListener('mousemove', (e) => {
+    const trail = document.getElementById('cw-gold-aura-trail');
+    if (trail) {
+        trail.style.left = (e.clientX - 20) + 'px';
+        trail.style.top = (e.clientY - 20) + 'px';
+    }
+});
 
  
 // 7. UTILS & HELPERS
@@ -832,22 +895,16 @@ function openLogoutDialog() {
     if (modal) modal.classList.remove('hidden'); 
 }
 
-function handleLogout(isConfirmed) {
+function closeLogoutModal() {
     const modal = document.getElementById('logoutModal');
-    modal.classList.add('hidden');
-    
-    if (isConfirmed) {
-        // Your actual logout logic
-        localStorage.clear();
-        window.location.reload(); 
-    }
+    if (modal) modal.classList.add('hidden');
 }
 
 function calculateRank(pts) { return pts >= 1200 ? "Master Scholar" : (pts >= 600 ? "Elite Student" : "Novice"); }
 
  
 // 9. SLIDER LOGIC (FIXED)
- 
+
 function manualSlide(index) {
     slideIndex = index;
     const track = document.getElementById('sliderTrack');
@@ -855,49 +912,40 @@ function manualSlide(index) {
     
     if (track) {
         track.style.transform = `translateX(-${index * 100}%)`;
+
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // 2. Use it inside an async function
+        async function runTimer() {
+
+        // Wait for 6000 milliseconds (6 seconds)
+        await delay(4000); 
+        track.style.transform = `translateX(-${index * 200}%)`;
+
+        }
+        runTimer();
+    } else {
+        track.style.transform = `translateX(-${index * 0}%)`;
     }
-    
-    // Update active dot visual state
-    dots.forEach((dot, i) => {
-        dot.classList.toggle('active', i === index);
-    });
+
+    if (dots.length > 0) {
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+    } else {
+        if (dots.length === 3) {
+            dots[2].classList.add('active');
+        }
+    }
+
 }
+
 
 // Auto-slide interval (stored in a variable so it stays consistent)
 
  
 // 8. INITIALIZATION
  
-window.onload = () => { if (u) syncAppState(); };
-for (let i = 1; i < 1000; i++) { clearInterval(i); }
-
-// 2. Start the "Safe-Mode" Interval
-setInterval(() => {
-    // Check if user is logged in
-    if (typeof u === 'undefined' || !userDB[u]) return;
-
-    // Check if we are on the page with the daily reward
-    const btn = document.getElementById('dailyBtn');
-    const timer = document.getElementById('claimTimer');
-
-    if (btn && timer) {
-        const last = userDB[u].lastClaim || 0;
-        const diff = Date.now() - last;
-        const remaining = 86400000 - diff;
-
-        if (remaining <= 0) {
-            btn.disabled = false;
-            timer.innerText = "Ready!";
-        } else {
-            btn.disabled = true;
-            const h = Math.floor(remaining / 3600000);
-            const m = Math.floor((remaining % 3600000) / 60000);
-            const s = Math.floor((remaining % 60000) / 1000);
-            timer.innerText = `${h}h ${m}m ${s}s`;
-        }
-    }
-}, 1000);
-setInterval(() => { slideIndex = (slideIndex === 0) ? 1 : 0; manualSlide(slideIndex); }, 6000);
 
  
 // 1. SEARCH LOGIC (Defined)
@@ -984,29 +1032,9 @@ function applyShopStyle(btn) {
 // Unified function for Style + Logic
 // Improved Setup with Clean String Logic
 function setupAllLearnButtons() {
-    document.querySelectorAll('button').forEach(btn => {
-        if (btn.innerText.trim() === "LEARN" && !btn.dataset.active) {
-            
-            // Apply the Shop Style you wanted
-            btn.style.all = "unset";
-            btn.style.cursor = "pointer";
-            btn.style.padding = "6px 12px";
-            btn.style.borderRadius = "6px";
-            btn.style.backgroundColor = "rgba(255,255,255,0.1)";
-            btn.style.border = "1px solid var(--border)";
-            btn.style.fontSize = "10px";
-            btn.style.fontWeight = "bold";
-            btn.style.transition = "0.2s";
-            btn.style.width = "100px";
-            btn.style.alignSelf = "center";
-            
-            // Get the topic name from the text immediately above the button
-            const topic = btn.parentElement.innerText.split('\n')[0].trim();
-            
-            btn.onclick = () => triggerCrawler(topic);
-            btn.dataset.active = "true";
-        }
-    });
+    // Disabled: avoid overriding existing button styles and handlers.
+    // Delegated handlers using data-* attributes already handle LEARN buttons.
+    return;
 }
 
 // Watch for when you open the Math/Physics folders
@@ -1055,70 +1083,17 @@ setInterval(() => {
 // This ensures that when you open Grade 7/8/9 menus, the buttons work instantly
 
 // Keep the observer, but make it call the plural function safely
+// Previously this observer auto-applied inline styles/handlers. With delegated
+// data-* handlers we don't need to mutate button styles at runtime — keep the
+// observer as a no-op to avoid interfering with user-defined styles.
 const finalObserver = new MutationObserver(() => {
-    if (typeof setupAllLearnButtons === 'function') {
-        setupAllLearnButtons();
-    }
+    // Intentionally empty: delegation handles dynamic elements.
 });
 
 // Only start observing if the body exists
 if (document.body) {
     finalObserver.observe(document.body, { childList: true, subtree: true });
 }
-
-function injectLogoutUI() {
-    // 1. Create the CSS
-    const style = document.createElement('style');
-    style.innerHTML = `
-        #logoutModal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(10px);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 9999; transition: 0.3s;
-        }
-        .logout-box {
-            background: #1a1a2e;
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid var(--primary);
-            text-align: center;
-            width: 90%; max-width: 350px;
-            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
-        }
-        .logout-box h2 { color: white; margin-bottom: 10px; }
-        .logout-box p { color: rgba(255,255,255,0.7); margin-bottom: 25px; }
-        .logout-btn-group { display: flex; gap: 10px; justify-content: center; }
-        .btn-logout { 
-            padding: 10px 25px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; 
-        }
-        .btn-confirm { background: #ff4d4d; color: white; }
-        .btn-cancel { background: rgba(255,255,255,0.1); color: white; }
-        .hidden { display: none !important; }
-    `;
-    document.head.appendChild(style);
-
-    // 2. Create the HTML Structure
-    const modal = document.createElement('div');
-    modal.id = 'logoutModal';
-    modal.className = 'hidden';
-    modal.innerHTML = `
-    <div id="logoutModal" class="hidden">
-        <div class="logout-box">
-            <h2>Are you sure you want to logout?</h2>
-            <div class="logout-btn-group">
-                <button class="btn-confirm" onclick="confirmLogout()">Yes</button>
-                <button class="btn-cancel" onclick="closeLogoutModal()">No</button>
-            </div>
-        </div>
-    </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-// Run the injection as soon as the script loads
-injectLogoutUI();
 
 // --- AI QUIZ GENERATOR ENGINE ---
 
@@ -1282,7 +1257,7 @@ function renderLibrary() {
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
                     <span style="font-size:0.7rem; opacity:0.5;">Saved ${item.date}</span>
-                    <button onclick="deleteVideo(${item.id})" style="background:none; border:none; color:#ff4d4d; cursor:pointer;">
+                    <button data-action="deleteVideo" data-video-id="${item.id}" style="background:none; border:none; color:#ff4d4d; cursor:pointer;">
                         <i class="fas fa-trash"></i> Delete
                     </button>
                 </div>
@@ -1572,27 +1547,7 @@ function backToExerciseCategories() {
     document.getElementById('exerciseCategories').classList.remove('hidden');
 }
 
-function renderExerciseTiers(subject) {
-    const container = document.getElementById('tiersContainer');
-    const tiers = exerciseDatabase[subject] || {};
-    
-    if (Object.keys(tiers).length === 0) {
-        container.innerHTML = `<p style="opacity: 0.5; text-align: center;">No exercises recorded for this category yet.</p>`;
-        return;
-    }
-
-    container.innerHTML = Object.keys(tiers).map(tierName => `
-        <div class="tier-group">
-            <div class="tier-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                <span>📁 ${tierName}</span>
-                <span style="font-size: 0.8rem; opacity: 0.5;">▼</span>
-            </div>
-            <div class="tier-content hidden">
-                ${tiers[tierName].map(ex => renderSingleCard(ex, subject)).join('')}
-            </div>
-        </div>
-    `).join('');
-}
+// (Older duplicate `renderExerciseTiers` removed — the improved version appears later in this file.)
 
 // A simple running view tracker to toggle content without forcing re-renders or double purchases
 let activeSolutionVisibility = {};
@@ -1639,7 +1594,7 @@ function renderSingleCard(ex, subject) {
                                 </div>
                             `;
                         }).join('')}
-                        <button class="ex-btn ex-btn-accent" id="submit-btn-${ex.id}" style="width: 100%; padding: 12px; font-weight: 800;" ${isCompleted ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''} onclick="submitDerivationSolution('${ex.id}')">
+                        <button class="ex-btn ex-btn-accent" id="submit-btn-${ex.id}" data-submit-derivation="${ex.id}" style="padding: 12px; font-weight: 800;" ${isCompleted ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
                             ${isCompleted ? 'Verification Complete' : 'Submit Verification for Review'}
                         </button>
                     </div>
@@ -1657,7 +1612,7 @@ function renderSingleCard(ex, subject) {
                         <label style="font-size: 0.85rem; font-weight:600; color: #fff; display: block; margin-bottom: 6px;">Your Scientific Explanation:</label>
                         <textarea id="direct-ans-${ex.id}" rows="3" placeholder="Type structural conceptual description..." 
                             ${isCompleted ? 'disabled style="width: 100%; padding: 12px; font-size: 0.9rem; background: #0b0b0b; color: #888; border: 1px solid #222; border-radius: 8px; resize: none; margin-bottom: 12px; font-family: inherit; line-height: 1.4;"' : 'style="width: 100%; padding: 12px; font-size: 0.9rem; background: #111; color: #fff; border: 1px solid #444; border-radius: 8px; resize: vertical; margin-bottom: 12px; font-family: inherit; line-height: 1.4;"'}>${savedAnswers[0] || ""}</textarea>
-                        <button class="ex-btn ex-btn-accent" id="submit-btn-${ex.id}" style="width: 100%; padding: 12px; font-weight: 800;" ${isCompleted ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''} onclick="submitDirectAnswer('${ex.id}', '${btoa(ex.ans)}')">
+                        <button class="ex-btn ex-btn-accent" id="submit-btn-${ex.id}" data-submit-direct="${ex.id}" data-correct="${btoa(ex.ans)}" style="padding: 12px; font-weight: 800;" ${isCompleted ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
                             ${isCompleted ? 'Integrity Verified' : 'Verify Answer Integrity'}
                         </button>
                     </div>
@@ -1673,11 +1628,11 @@ function renderSingleCard(ex, subject) {
                 </div>
 
                 <div class="exercise-action-bar" style="margin-top: 15px; display: flex; gap: 12px;">
-                    <button class="ex-btn ex-btn-secondary" id="reveal-btn-${ex.id}" style="padding: 12px;" onclick="toggleExerciseSolution('${ex.id}', ${isSpecialCategory})">
+                    <button class="ex-btn ex-btn-secondary" id="reveal-btn-${ex.id}" data-reveal-id="${ex.id}" data-reveal-special="${isSpecialCategory}" style="padding: 12px;">
                         ${isUnlocked ? (isVisible ? 'Hide Solution' : (isSpecialCategory ? 'Show Answer' : 'Show Solution')) : (isSpecialCategory ? 'Show Answer (-100 PTS)' : 'Show Solution (-100 PTS)')}
                     </button>
                     
-                    <button class="ex-btn ex-btn-accent" style="padding: 12px;" onclick="document.getElementById('solve-panel-${ex.id}').classList.toggle('hidden')">
+                    <button class="ex-btn ex-btn-accent" style="padding: 12px;" data-toggle-solve="${ex.id}">
                         ${isCompleted ? 'View My Answer' : (isSpecialCategory ? 'Input Answer' : 'Solve')}
                     </button>
                 </div>
@@ -1913,10 +1868,10 @@ function submitDirectAnswer(id, encryptedCorrect) {
 
 function getCurrentUserGrade() {
     // Falls back safely to Grade 9 if no user profile state is configured yet
-    if (window.u && window.userDB && userDB[u] && userDB[u].grade) {
+    if (userDB && u && userDB[u] && userDB[u].grade) {
         return String(userDB[u].grade);
     }
-    return `${(userDB[u].grade)}`;
+    return '9';
 }
 
 function renderExerciseTiers(subject) {
@@ -1938,7 +1893,7 @@ function renderExerciseTiers(subject) {
 
     container.innerHTML = Object.keys(tiers).map(tierName => `
         <div class="tier-group">
-            <div class="tier-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
+            <div class="tier-header" data-action="toggleSiblingHidden">
                 <span>📁 Grade ${userGrade} • ${tierName}</span>
                 <span style="font-size: 0.8rem; opacity: 0.5;">▼</span>
             </div>
@@ -1968,53 +1923,327 @@ function handleQuickReactionEntry() {
     
     if (now - lastPlayed < coolingWindow) {
         const remainingMinutes = Math.ceil((coolingWindow - (now - lastPlayed)) / 60000);
-        
-        // Construct dynamic choice modal via prompt confirmation layers
-        const choice = showAlert(`🔒 SYSTEM COOLDOWN ACTIVE\nYou must wait ${remainingMinutes} more minutes to access the simulator for free.\n\nAlternatively, you can pay 150 PTS to bypass this restriction instantly.\n\nDo you want to spend 150 PTS?`);
-        
-        if (choice) {
-            const currentPoints = userDB[u].points || 0;
+        const currentPoints = userDB[u].points || 0;
+
+        // 1. Create the overlay container
+        const overlay = document.createElement('div');
+        overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; font-family: sans-serif; color: #fff; padding: 20px; box-sizing: border-box;";
+
+        // 2. Inject your exact reference styles mixed with the cooldown info
+        overlay.innerHTML = `
+            <div style="background: #1a1a1a; padding: 24px; border-radius: 12px; border: 1px solid #333; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 8px;">🔒 SYSTEM COOLDOWN ACTIVE</div>
+                <div style="font-size: 14px; color: #aaa; line-height: 1.4;">You must wait ${remainingMinutes} more minutes to access the simulator for free.</div>
+                
+                <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border, #333); padding: 12px; border-radius: 8px; margin-top: 15px; text-align: left; font-size: 14px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span>Your Current Balance:</span> <strong style="color: #00ff88;">${currentPoints} PTS</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Cost to Bypass:</span> <strong style="color: #ff4d4d;">-150 PTS</strong>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button id="cancelBypassBtn" style="background: transparent; color: #aaa; border: 1px solid #444; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">Wait</button>
+                    <button id="confirmBypassBtn" style="background: #00ff88; color: #000; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px;">Bypass</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // 3. Handle Cancel ("if (!choice) return;")
+        overlay.querySelector('#cancelBypassBtn').addEventListener('click', () => {
+            overlay.remove();
+        });
+
+        // 4. Handle Confirm (Runs the exact logic your old code ran after a true choice)
+        overlay.querySelector('#confirmBypassBtn').addEventListener('click', () => {
+            overlay.remove();
+
             if (currentPoints < 150) {
                 showAlert(`Transaction Declined!<br><span style='font-size:0.8rem; opacity:0.7;'>You only possess <b>${currentPoints} PTS</b>. This bypass requires 150 PTS.</span>`);
                 return;
             }
             
-            // Deduct Points
             userDB[u].points -= 150;
             if (typeof triggerPointAnim === 'function') triggerPointAnim(150, true);
             saveAndSync();
-            
-            // Bypass granted
             navigateTo('QuickReactionLobbyView');
-        }
+        });
+
     } else {
-        // Cooldown clean, pass through safely
         navigateTo('QuickReactionLobbyView');
     }
 }
 
 // 2. RUNTIME SIMULATOR INITIALIZATION TRIPPERS
+// Global trackers
+let qrSelectedDifficulty = 'easy'; 
+
+// =========================================================================
+// MASSIVE EXPANDED QUESTION POOL MATRIX (GRADES 7, 8, 9)
+// =========================================================================
+const ARCADE_QUESTION_POOL = {
+    Math: {
+        "7": {
+            easy: [
+                { q: "Solve for x: x + 3 = 8", a: "5", options: ["5", "3", "11", "2"] },
+                { q: "Solve for x: 2x = 10", a: "5", options: ["5", "2", "8", "20"] },
+                { q: "Solve for x: x - 4 = 6", a: "10", options: ["10", "2", "4", "14"] },
+                { q: "Solve for x: 3x = 12", a: "4", options: ["4", "9", "15", "3"] },
+                { q: "Solve for x: x + 7 = 7", a: "0", options: ["0", "7", "14", "-7"] },
+                { q: "Solve for x: x - 5 = 15", a: "20", options: ["20", "10", "25", "15"] },
+                { q: "Solve for x: 4x = 24", a: "6", options: ["6", "4", "8", "12"] },
+                { q: "Solve for x: x + 12 = 20", a: "8", options: ["8", "12", "32", "6"] }
+            ],
+            medium: [
+                { q: "Solve for x: 2x + 4 = 12", a: "4", options: ["4", "8", "3", "6"] },
+                { q: "Solve for x: 3x - 1 = 14", a: "5", options: ["5", "4", "13", "15"] },
+                { q: "Solve for x: 5x + 5 = 30", a: "5", options: ["5", "6", "25", "7"] },
+                { q: "Solve for x: 4x - 2 = 10", a: "3", options: ["3", "4", "2", "6"] },
+                { q: "Solve for x: 2x + 10 = 20", a: "5", options: ["5", "10", "15", "8"] },
+                { q: "Solve for x: 3x + 9 = 27", a: "6", options: ["6", "9", "12", "4"] },
+                { q: "Solve for x: 6x - 4 = 20", a: "4", options: ["4", "6", "8", "2"] }
+            ],
+            hard: [
+                { q: "Solve for x: 3(x + 2) = 15", a: "3", options: ["3", "5", "1", "2"] },
+                { q: "Solve for x: 2x + 5 = x + 9", a: "4", options: ["4", "14", "2", "5"] },
+                { q: "Solve for x: 5x - 3 = 2x + 6", a: "3", options: ["3", "9", "1", "4"] },
+                { q: "Evaluate: -4 * (-3) + 5", a: "17", options: ["17", "-7", "7", "-17"] },
+                { q: "Solve for x: (x / 2) + 5 = 9", a: "8", options: ["8", "4", "14", "2"] },
+                { q: "Solve for x: 4(x - 1) = 2(x + 4)", a: "6", options: ["6", "4", "2", "8"] },
+                { q: "Solve for x: x/3 + 2 = x/2", a: "12", options: ["12", "6", "4", "24"] }
+            ]
+        },
+        "8": {
+            easy: [
+                { q: "Find the area of a square with side length 5cm.", a: "25 cm²", options: ["25 cm²", "20 cm²", "10 cm²", "50 cm²"] },
+                { q: "Find the perimeter of a rectangle with length 4cm and width 3cm.", a: "14cm", options: ["14cm", "12cm", "7cm", "24cm"] },
+                { q: "What is 15% of 200?", a: "30", options: ["30", "15", "20", "45"] },
+                { q: "Simplify: x³ * x²", a: "x⁵", options: ["x⁵", "x⁶", "x¹", "2x⁵"] },
+                { q: "What is the square root of 64?", a: "8", options: ["8", "6", "7", "9"] },
+                { q: "Find the volume of a cube with edge 3cm.", a: "27 cm³", options: ["27 cm³", "9 cm³", "18 cm³", "81 cm³"] },
+                { q: "What is the square root of 144?", a: "12", options: ["12", "14", "11", "16"] }
+            ],
+            medium: [
+                { q: "A right triangle has legs 3cm and 4cm. Find the hypotenuse.", a: "5cm", options: ["5cm", "7cm", "12cm", "6cm"] },
+                { q: "A right triangle has legs 6cm and 8cm. Find the hypotenuse.", a: "10cm", options: ["10cm", "14cm", "12cm", "48cm"] },
+                { q: "Simplify: (x⁴)³", a: "x¹²", options: ["x¹²", "x⁷", "x⁴³", "3x⁴"] },
+                { q: "Solve: x² = 121", a: "11", options: ["11", "12", "21", "10"] },
+                { q: "What is the value of 2⁻³?", a: "1/8", options: ["1/8", "-8", "8", "1/6"] },
+                { q: "Find the hypotenuse of a right triangle with sides 5cm and 12cm.", a: "13cm", options: ["13cm", "15cm", "17cm", "14cm"] },
+                { q: "Simplify: 2x⁴ * 3x³", a: "6x⁷", options: ["6x⁷", "5x⁷", "6x¹²", "5x¹²"] }
+            ],
+            hard: [
+                { q: "Find a root solution for: x² - 5x + 6 = 0", a: "2", options: ["2", "5", "0", "-2"] },
+                { q: "A right triangle has a leg of 5cm and a hypotenuse of 13cm. Find the missing leg.", a: "12cm", options: ["12cm", "8cm", "18cm", "14cm"] },
+                { q: "Solve for x: x² - 9 = 0", a: "3", options: ["3", "9", "0", "4.5"] },
+                { q: "Simplify: (2x³)²", a: "4x⁶", options: ["4x⁶", "2x⁶", "4x⁵", "2x⁵"] },
+                { q: "If 2x + y = 10 and x = 3, what is y?", a: "4", options: ["4", "7", "1", "3"] },
+                { q: "Find a root solution for: x² - 6x + 8 = 0", a: "4", options: ["4", "2", "-2", "0"] },
+                { q: "Find the distance between coordinate points (1,1) and (4,5).", a: "5", options: ["5", "7", "25", "6"] }
+            ]
+        },
+        "9": {
+            easy: [
+                { q: "Simplify the expression: 3x + 4x - 2x", a: "5x", options: ["5x", "7x", "9x", "x"] },
+                { q: "What is the slope of the line y = 3x + 2?", a: "3", options: ["3", "2", "-3", "1"] },
+                { q: "Evaluate: 5⁰", a: "1", options: ["1", "5", "0", "-5"] },
+                { q: "If f(x) = 2x + 3, find f(4).", a: "11", options: ["11", "9", "14", "8"] },
+                { q: "Find the midpoint between coordinates (2,4) and (4,4).", a: "(3,4)", options: ["(3,4)", "(2,4)", "(6,8)", "(3,2)"] },
+                { q: "What is the slope of a horizontal line?", a: "0", options: ["0", "1", "Undefined", "-1"] }
+            ],
+            medium: [
+                { q: "Find a root solution for: x² - 7x + 12 = 0", a: "3", options: ["3", "4", "0", "-1"] },
+                { q: "What is the y-intercept of the line 2x + 3y = 6?", a: "2", options: ["2", "3", "6", "0"] },
+                { q: "Factor completely: x² - 16", a: "(x-4)(x+4)", options: ["(x-4)(x+4)", "(x-4)²", "(x+4)²", "x(x-16)"] },
+                { q: "Solve the linear system: x + y = 5, x - y = 1. Find x.", a: "3", options: ["3", "2", "4", "1"] },
+                { q: "Find the distance between points (0,0) and (3,4).", a: "5", options: ["5", "7", "25", "1"] },
+                { q: "Factor completely: x² - 5x - 6", a: "(x-6)(x+1)", options: ["(x-6)(x+1)", "(x-3)(x-2)", "(x+6)(x-1)", "(x-5)(x+1)"] }
+            ],
+            hard: [
+                { q: "In trigonometry, what is the exact value of sin(30°)?", a: "0.5", options: ["0.5", "1", "0", "0.866"] },
+                { q: "In trigonometry, what is the exact value of cos(0°)?", a: "1", options: ["1", "0", "0.5", "Undefined"] },
+                { q: "Find the vertex layout point of the parabola: f(x) = x² - 4x + 5", a: "(2,1)", options: ["(2,1)", "(4,5)", "(0,5)", "(-2,1)"] },
+                { q: "Solve for x: log_2(x) = 3", a: "8", options: ["8", "6", "9", "3"] },
+                { q: "What is the discriminant value of the quadratic equation: x² - 4x + 4 = 0?", a: "0", options: ["0", "16", "8", "-16"] },
+                { q: "In trigonometry, what is the exact value of tan(45°)?", a: "1", options: ["1", "0", "√2", "Undefined"] }
+            ]
+        }
+    },
+    Physics: {
+        "7": {
+            easy: [
+                { q: "Which of the following is a basic state of matter?", a: "Solid", options: ["Solid", "Electricity", "Light", "Heat"] },
+                { q: "What measuring unit monitors temperature readings?", a: "Celsius", options: ["Celsius", "Meter", "Gram", "Liter"] },
+                { q: "True or False: Sound travels faster in water than in air.", a: "True", options: ["True", "False", "Equal", "Sound cannot travel in water"] },
+                { q: "What primary source provides light and heat to Earth?", a: "The Sun", options: ["The Sun", "The Moon", "Volcanoes", "Electricity"] },
+                { q: "What tool is utilized to measure mass?", a: "Balance Scale", options: ["Balance Scale", "Ruler", "Thermometer", "Beaker"] },
+                { q: "Which of these objects is transparent?", a: "Clear Glass", options: ["Clear Glass", "Wood", "Cardboard", "Iron Plate"] }
+            ],
+            medium: [
+                { q: "An object travels 40 meters in 10 seconds. Calculate its speed.", a: "4 m/s", options: ["4 m/s", "400 m/s", "14 m/s", "0.25 m/s"] },
+                { q: "An object travels 100 meters in 5 seconds. Calculate its speed.", a: "20 m/s", options: ["20 m/s", "500 m/s", "105 m/s", "25 m/s"] },
+                { q: "Convert 2 kilometers into meters.", a: "2000m", options: ["2000m", "200m", "20m", "20000m"] },
+                { q: "What type of energy is stored in a stretched rubber band?", a: "Potential Energy", options: ["Potential Energy", "Kinetic Energy", "Thermal Energy", "Chemical Energy"] },
+                { q: "Which material acts as an excellent electrical conductor?", a: "Copper", options: ["Copper", "Rubber", "Glass", "Plastic"] }
+            ],
+            hard: [
+                { q: "If an object has a mass of 5kg on Earth, what is its approximate weight? (g ≈ 10m/s²)", a: "50 N", options: ["50 N", "5 N", "0.5 N", "500 N"] },
+                { q: "What type of heat transfer occurs through direct physical contact?", a: "Conduction", options: ["Conduction", "Convection", "Radiation", "Insulation"] },
+                { q: "A 10kg box is pulled with 30N of force. Find its acceleration.", a: "3 m/s²", options: ["3 m/s²", "300 m/s²", "0.3 m/s²", "20 m/s²"] },
+                { q: "What is the density of an object with a mass of 20g and a volume of 5cm³?", a: "4 g/cm³", options: ["4 g/cm³", "100 g/cm³", "0.25 g/cm³", "15 g/cm³"] },
+                { q: "Which color absorbs the most thermal radiation?", a: "Black", options: ["Black", "White", "Silver", "Red"] }
+            ]
+        },
+        "8": {
+            easy: [
+                { q: "What physical property causes an object to resist changes to its motion?", a: "Inertia", options: ["Inertia", "Velocity", "Volume", "Friction"] },
+                { q: "What is the standard unit of Force?", a: "Newton (N)", options: ["Newton (N)", "Joule (J)", "Watt (W)", "Pascal (Pa)"] },
+                { q: "What primary force pulls objects down toward Earth's center?", a: "Gravity", options: ["Gravity", "Magnetism", "Friction", "Air Resistance"] },
+                { q: "What unit gauges electrical resistance variables?", a: "Ohm", options: ["Ohm", "Volt", "Ampere", "Watt"] },
+                { q: "Friction always acts in a direction ______ to the motion.", a: "Opposite", options: ["Opposite", "Parallel", "Identical", "Perpendicular"] }
+            ],
+            medium: [
+                { q: "A force of 10 N moves an object 5 meters. Calculate the work done.", a: "50 J", options: ["50 J", "2 J", "15 J", "500 J"] },
+                { q: "A force of 20 N moves an object 4 meters. Calculate the work done.", a: "80 J", options: ["80 J", "5 J", "24 J", "160 J"] },
+                { q: "What basic component regulates electrical current paths inside circuits?", a: "Resistor", options: ["Resistor", "Battery", "Wire", "Switch"] },
+                { q: "Calculate the pressure when a 50 N force acts over an area of 2 m².", a: "25 Pa", options: ["25 Pa", "100 Pa", "52 Pa", "10 Pa"] },
+                { q: "An object accelerates from 0 to 20 m/s over 5 seconds. Find its acceleration rate.", a: "4 m/s²", options: ["4 m/s²", "100 m/s²", "15 m/s²", "2 m/s²"] }
+            ],
+            hard: [
+                { q: "Calculate fluid pressure at 2m deep inside a liquid water reservoir. (p=1000kg/m³, g=10m/s²)", a: "20000 Pa", options: ["20000 Pa", "2000 Pa", "5000 Pa", "10000 Pa"] },
+                { q: "What is the mechanical advantage of a lever where the effort arm is 6m and load arm is 2m?", a: "3", options: ["3", "12", "0.33", "4"] },
+                { q: "An electrical device pulls 2 Amps under a 12 Volt line. Find its power output.", a: "24 W", options: ["24 W", "6 W", "14 W", "48 W"] },
+                { q: "A sound wave has a frequency of 200 Hz and a wavelength of 2m. Find its wave speed.", a: "400 m/s", options: ["400 m/s", "100 m/s", "202 m/s", "0.01 m/s"] },
+                { q: "What physical property remains constant when a gas undergoes isothermal expansion?", a: "Temperature", options: ["Temperature", "Pressure", "Volume", "Mass Capacity"] }
+            ]
+        },
+        "9": {
+            easy: [
+                { q: "What unit identifies acceleration speed modifications over time?", a: "m/s²", options: ["m/s²", "m/s", "Joules", "Watts"] },
+                { q: "What form of energy is possessed by a moving object?", a: "Kinetic Energy", options: ["Kinetic Energy", "Potential Energy", "Chemical Energy", "Nuclear Energy"] },
+                { q: "What basic particle carries a negative electrical charge signature?", a: "Electron", options: ["Electron", "Proton", "Neutron", "Atom"] },
+                { q: "What type of lens converges parallel rays of light?", a: "Convex Lens", options: ["Convex Lens", "Concave Lens", "Flat Mirror", "Prism"] },
+                { q: "What is the frequency unit equivalent to cycles per second?", a: "Hertz (Hz)", options: ["Hertz (Hz)", "Decibel (dB)", "Newton", "Joule"] }
+            ],
+            medium: [
+                { q: "Calculate the force required to accelerate a 5kg mass at 3 m/s².", a: "15 N", options: ["15 N", "8 N", "1.6 N", "45 N"] },
+                { q: "Calculate the force required to accelerate a 10kg mass at 2 m/s².", a: "20 N", options: ["20 N", "12 N", "5 N", "50 N"] },
+                { q: "Find the momentum of a 5kg object moving at 4 m/s. (p = m * v)", a: "20 kg·m/s", options: ["20 kg·m/s", "9 kg·m/s", "1.25 kg·m/s", "40 kg·m/s"] },
+                { q: "A 60W lightbulb runs for 10 seconds. Find the total energy used.", a: "600 J", options: ["600 J", "6 J", "70 J", "0.16 J"] },
+                { q: "What type of wave is a sound wave?", a: "Longitudinal Wave", options: ["Longitudinal Wave", "Transverse Wave", "Electromagnetic Wave", "Surface Wave"] }
+            ],
+            hard: [
+                { q: "What kinetic energy is generated by a 4kg projectile moving at 3 m/s? (KE = 0.5 * m * v²)", a: "18 J", options: ["18 J", "36 J", "12 J", "6 J"] },
+                { q: "An object is dropped from a cliff. Find its velocity after 3 seconds of freefall. (g = 9.8m/s²)", a: "29.4 m/s", options: ["29.4 m/s", "9.8 m/s", "14.7 m/s", "44.1 m/s"] },
+                { q: "Two resistors (4 ohms and 6 ohms) are wired in series. Find total resistance.", a: "10 ohms", options: ["10 ohms", "2.4 ohms", "24 ohms", "2 ohms"] },
+                { q: "What is the total resistance of two 4-ohm resistors wired in parallel?", a: "2 ohms", options: ["2 ohms", "8 ohms", "4 ohms", "1 ohm"] },
+                { q: "An object is placed 10cm away from a convex lens with focal length 5cm. Find the image distance.", a: "10cm", options: ["10cm", "5cm", "20cm", "Infinite"] }
+            ]
+        }
+    },
+    Chemistry: {
+        "7": {
+            easy: [
+                { q: "Is melting an ice cube a physical or chemical change?", a: "Physical Change", options: ["Physical Change", "Chemical Change", "Atomic Decay", "None"] },
+                { q: "What is the chemical formula for pure water?", a: "H₂O", options: ["H₂O", "CO₂", "O₂", "H₂O₂"] },
+                { q: "What gas molecule do humans breathe out as waste?", a: "CO₂", options: ["CO₂", "O₂", "N₂", "H₂"] },
+                { q: "What state of matter has a definite volume but no definite shape?", a: "Liquid", options: ["Liquid", "Solid", "Gas", "Plasma"] },
+                { q: "Is dissolving sugar into water a physical or chemical change?", a: "Physical Change", options: ["Physical Change", "Chemical Change", "Nuclear Change", "Biological Change"] }
+            ],
+            medium: [
+                { q: "Which symbol represents pure gas Oxygen?", a: "O₂", options: ["O₂", "O", "Ox", "O₃"] },
+                { q: "What type of mixture occurs when components settle into one single visual layer?", a: "Homogeneous Mixture", options: ["Homogeneous Mixture", "Heterogeneous Mixture", "Suspension", "Element"] },
+                { q: "Which of the following represents a chemical compound?", a: "NaCl", options: ["NaCl", "O₂", "Au", "Fe"] },
+                { q: "What is the main gas component found inside Earth's atmosphere?", a: "Nitrogen", options: ["Nitrogen", "Oxygen", "Carbon Dioxide", "Argon"] },
+                { q: "Separating sand from water using a paper mesh is known as:", a: "Filtration", options: ["Filtration", "Evaporation", "Distillation", "Decantation"] }
+            ],
+            hard: [
+                { q: "What specific name describes a mixture containing uniform particles that do not settle out over time?", a: "Colloid", options: ["Colloid", "Solution", "Suspension", "Alloy"] },
+                { q: "What happens to the density of water when it transforms from liquid to solid ice?", a: "Decreases", options: ["Decreases", "Increases", "Stays Constant", "Doubles"] },
+                { q: "Which pH value indicates a highly acidic liquid solution?", a: "2", options: ["2", "7", "9", "14"] },
+                { q: "What form of chemical change occurs when iron breaks down in the presence of water and oxygen?", a: "Rusting (Oxidation)", options: ["Rusting (Oxidation)", "Combustion", "Neutralization", "Fermentation"] },
+                { q: "What is the common name for the chemical compound Sodium Chloride?", a: "Table Salt", options: ["Table Salt", "Baking Soda", "Bleach", "Vinegar"] }
+            ]
+        },
+        "8": {
+            easy: [
+                { q: "Identify the chemical symbol notation used to describe Sodium.", a: "Na", options: ["Na", "S", "So", "N"] },
+                { q: "What is the atomic symbol for Iron?", a: "Fe", options: ["Fe", "I", "Ir", "In"] },
+                { q: "What subatomic particle holds a positive charge profile?", a: "Proton", options: ["Proton", "Electron", "Neutron", "Positron"] },
+                { q: "Where are protons and neutrons located inside an atom?", a: "Nucleus", options: ["Nucleus", "Electron Cloud", "Orbitals", "Outer Shell"] },
+                { q: "Rows on the Periodic Table are called:", a: "Periods", options: ["Periods", "Groups", "Families", "Columns"] }
+            ],
+            medium: [
+                { q: "What is the atomic number of Carbon (C)?", a: "6", options: ["6", "12", "14", "4"] },
+                { q: "What is the atomic number of Oxygen (O)?", a: "8", options: ["8", "16", "6", "10"] },
+                { q: "Columns on the Periodic Table are known as:", a: "Groups", options: ["Groups", "Periods", "Rows", "Lines"] },
+                { q: "What are the horizontal rows on the periodic table called?", a: "Periods", options: ["Periods", "Groups", "Categories", "Blocks"] },
+                { q: "An atom gets a negative charge configuration by:", a: "Gaining Electrons", options: ["Gaining Electrons", "Losing Electrons", "Gaining Protons", "Losing Neutrons"] }
+            ],
+            hard: [
+                { q: "What outer valence electron capacity count tracks across Group 17 Halogens?", a: "7", options: ["7", "8", "1", "17"] },
+                { q: "Elements in Group 18 are chemically unreactive and known as:", a: "Noble Gases", options: ["Noble Gases", "Halogens", "Alkali Metals", "Lanthanides"] },
+                { q: "What type of chemical bond forms when two non-metal atoms share electrons?", a: "Covalent Bond", options: ["Covalent Bond", "Ionic Bond", "Metallic Bond", "Hydrogen Bond"] },
+                { q: "What type of bond forms between a Metal and a Non-Metal via electron transfer?", a: "Ionic Bond", options: ["Ionic Bond", "Covalent Bond", "Metallic Bond", "Nuclear Bond"] },
+                { q: "What is the total number of atoms present in a single molecule of H₂SO₄?", a: "7", options: ["7", "3", "6", "4"] }
+            ]
+        },
+        "9": {
+            easy: [
+                { q: "What chemical compound name represents H₂O?", a: "Water", options: ["Water", "Hydrogen Peroxide", "Acid", "Methane"] },
+                { q: "What are the starting substances on the left side of a chemical equation called?", a: "Reactants", options: ["Reactants", "Products", "Catalysts", "Solutes"] },
+                { q: "What value scale is used to determine how basic or acidic a solution is?", a: "pH Scale", options: ["pH Scale", "Celsius Scale", "Richter Scale", "Mole Scale"] },
+                { q: "What is the chemical formula for Carbon Dioxide?", a: "CO₂", options: ["CO₂", "CO", "C₂O", "CoO"] },
+                { q: "A substance that speeds up a chemical reaction without being consumed is a:", a: "Catalyst", options: ["Catalyst", "Inhibitor", "Reactant", "Product"] }
+            ],
+            medium: [
+                { q: "Identify the balanced reaction yield missing here: 2H₂ + O₂ → [???]", a: "2H₂O", options: ["2H₂O", "H₂O₂", "4OH", "O₃"] },
+                { q: "Balance the equation: N₂ + 3H₂ → ___ NH₃.", a: "2", options: ["2", "1", "3", "4"] },
+                { q: "A solution with a pH value of exactly 7 is considered:", a: "Neutral", options: ["Neutral", "Acidic", "Basic", "Alkaline"] },
+                { q: "What type of reaction releases thermal energy into its surroundings?", a: "Exothermic", options: ["Exothermic", "Endothermic", "Catalytic", "Reversible"] }
+            ],
+            hard: [
+                { q: "Calculate the total molecular weight mass of 2 moles of Carbon-12 atoms. (Atomic Mass ≈ 12g/mol)", a: "24g", options: ["24g", "12g", "6g", "48g"] },
+                { q: "What is the molar mass of pure water (H₂O)? (H = 1g/mol, O = 16g/mol)", a: "18 g/mol", options: ["18 g/mol", "10 g/mol", "17 g/mol", "2 g/mol"] },
+                { q: "What type of reaction follows the format layout pattern: A + BC → AC + B?", a: "Single Replacement", options: ["Single Replacement", "Synthesis", "Decomposition", "Double Replacement"] },
+                { q: "What is Avogadro's constant value tracking the items inside one mole?", a: "6.02 x 10²³", options: ["6.02 x 10²³", "3.14 x 10¹¹", "9.8 x 10²", "1.6 x 10⁻¹⁹"] },
+                { q: "What law states that matter cannot be created or destroyed during a chemical reaction?", a: "Law of Conservation of Mass", options: ["Law of Conservation of Mass", "Law of Definite Proportions", "Boyle's Law", "Ohm's Law"] }
+            ]
+        }
+    }
+};
+
 function startQuickReactionGame() {
     const selectedSubject = document.getElementById('qr-subject-select').value;
     const selectedDuration = parseInt(document.getElementById('qr-time-select').value, 10);
     
-    // Initialize Memory Coordinates
+    // Capture and save difficulty globally
+    qrSelectedDifficulty = document.getElementById('qr-difficulty-select').value;
+    
     qrTimeRemaining = selectedDuration;
     qrRunningPointsEarned = 0;
     qrIsFrozen = false;
-    
+
+    if (window.bottomNav) {
+        bottomNav.classList.add('hidden');
+    }
+
     document.getElementById('qr-timer-display').innerText = qrTimeRemaining;
     document.getElementById('qr-running-score').innerText = qrRunningPointsEarned;
     document.getElementById('qr-freeze-banner').classList.add('hidden');
     
-    // Stamp account activity logs to trip cooldown triggers
-    userDB[u].qrLastPlayedTimestamp = Date.now();
-    saveAndSync();
+    if (window.u && window.userDB && userDB[u]) {
+        userDB[u].qrLastPlayedTimestamp = Date.now();
+        saveAndSync();
+    }
     
-    navigateTo('QuickReactionGame');
+    navigateTo('QuickReactionGameView');
     injectNextArcadeQuestion(selectedSubject);
     
-    // Fire Processing Heartbeat Clock
     clearInterval(qrTimerInstance);
     qrTimerInstance = setInterval(() => {
         if (!qrIsFrozen) {
@@ -2028,140 +2257,75 @@ function startQuickReactionGame() {
     }, 1000);
 }
 
-// 3. RAPID QUESTION GENERATOR (MATH / PHYSICS / CHEMISTRY CONTEXT POOLS)
-// 3. ERROR-PROOF MULTI-GRADE QUESTION GENERATOR (MATH / PHYSICS / CHEMISTRY)
 function injectNextArcadeQuestion(subject) {
-    let questionText = "";
-    let optionsArray = [];
-    
-    // Attempt to safely extract the student's grade level if available
-    let studentGrade = "9"; // Default fallback so the game never breaks
+    let studentGrade = "9"; 
     if (window.u && window.userDB && userDB[u] && userDB[u].grade) {
         studentGrade = String(userDB[u].grade);
     } else if (window.currentAccount && currentAccount.grade) {
         studentGrade = String(currentAccount.grade);
     }
-
-    // ==========================================
-    // SUBJECT MATRIX: MATH
-    // ==========================================
-    if (subject === "Math") {
-        if (studentGrade === "7") {
-            // Grade 7: Basic Linear Equations (e.g., 3x = 12 or x + 5 = 11)
-            const xVal = Math.floor(Math.random() * 8) + 2; // Solution between 2 and 9
-            const coeff = Math.floor(Math.random() * 5) + 2; // Coefficient between 2 and 6
-            questionText = `Grade 7 Math: Solve for x: ${coeff}x = ${coeff * xVal}`;
-            qrActiveCorrectAnswer = String(xVal);
-            optionsArray = [qrActiveCorrectAnswer, String(xVal + 3), String(xVal - 1), String(xVal * 2)];
-        } 
-        else if (studentGrade === "8") {
-            // Grade 8: Pythagorean Triples (Finding Hypotenuse 'c')
-            const triples = [
-                {a: 3, b: 4, c: 5},
-                {a: 6, b: 8, c: 10},
-                {a: 5, b: 12, c: 13}
-            ];
-            const chosen = triples[Math.floor(Math.random() * triples.length)];
-            questionText = `Grade 8 Math: A right triangle has legs measuring ${chosen.a}cm and ${chosen.b}cm. Find the hypotenuse (c).`;
-            qrActiveCorrectAnswer = `${chosen.c}cm`;
-            optionsArray = [qrActiveCorrectAnswer, `${chosen.c + 2}cm`, `${chosen.a + chosen.b}cm`, `${chosen.c - 2}cm`];
-        } 
-        else {
-            // Grade 9: Simple Factoring / Roots (x² - 5x + 6 = 0 -> roots are 2 and 3)
-            const roots = [
-                {r1: 2, r2: 3, text: "x² - 5x + 6 = 0"},
-                {r1: 1, r2: 5, text: "x² - 6x + 5 = 0"},
-                {r1: 3, r2: 4, text: "x² - 7x + 12 = 0"}
-            ];
-            const chosen = roots[Math.floor(Math.random() * roots.length)];
-            questionText = `Grade 9 Math: Find one of the correct roots for: ${chosen.text}`;
-            qrActiveCorrectAnswer = String(chosen.r1);
-            optionsArray = [qrActiveCorrectAnswer, String(chosen.r2 + 3), "0", "-2"];
-        }
-    } 
-    // ==========================================
-    // SUBJECT MATRIX: PHYSICS
-    // ==========================================
-    else if (subject === "Physics") {
-        if (studentGrade === "7" || studentGrade === "8") {
-            // Grade 7/8: Uniform Speed (v = d / t)
-            const distance = [40, 60, 80, 100][Math.floor(Math.random() * 4)];
-            const time = [5, 10, 20][Math.floor(Math.random() * 3)];
-            const speed = distance / time;
-            
-            questionText = `Grade ${studentGrade} Physics: An object travels ${distance} meters in ${time} seconds. Calculate its speed.`;
-            qrActiveCorrectAnswer = `${speed} m/s`;
-            optionsArray = [qrActiveCorrectAnswer, `${speed + 4} m/s`, `${speed * 2} m/s`, `${Math.max(1, speed - 2)} m/s`];
-        } else {
-            // Grade 9: Force and Acceleration (F = m * a)
-            const mass = Math.floor(Math.random() * 8) + 3; // 3kg to 10kg
-            const acc = Math.floor(Math.random() * 4) + 2;  // 2m/s² to 5m/s²
-            const force = mass * acc;
-            
-            questionText = `Grade 9 Physics: Calculate the net force required to accelerate a ${mass}kg mass object at a rate of ${acc} m/s².`;
-            qrActiveCorrectAnswer = `${force} N`;
-            optionsArray = [qrActiveCorrectAnswer, `${force + 10} N`, `${mass + acc} N`, `${Math.max(1, force - 5)} N`];
-        }
-    } 
-    // ==========================================
-    // SUBJECT MATRIX: CHEMISTRY
-    // ==========================================
-    else if (subject === "Chemistry") {
-        const chemistryPool = [
-            { q: "What is the atomic number of Carbon (C)?", a: "6", g: "8" },
-            { q: "What is the atomic number of Oxygen (O)?", a: "8", g: "8" },
-            { q: "Is melting an ice cube a physical change or a chemical change?", a: "Physical Change", g: "7" },
-            { q: "Is burning a piece of wood a physical change or a chemical change?", a: "Chemical Change", g: "7" },
-            { q: "What gas molecule is produced on the right side of: 2H₂ + O₂ → ???", a: "2H₂O", g: "9" }
-        ];
-        
-        // Filter elements matching student grade, fallback to entire pool if none match
-        let filteredPool = chemistryPool.filter(item => item.g === studentGrade);
-        if (filteredPool.length === 0) filteredPool = chemistryPool;
-        
-        const selected = filteredPool[Math.floor(Math.random() * filteredPool.length)];
-        questionText = selected.q;
-        qrActiveCorrectAnswer = selected.a;
-        
-        if (selected.a === "Physical Change" || selected.a === "Chemical Change") {
-            optionsArray = ["Physical Change", "Chemical Change", "Nuclear Change", "No Change"];
-        } else if (selected.a === "2H₂O") {
-            optionsArray = ["2H₂O", "H₂O₂", "OH-", "2O₂"];
-        } else {
-            optionsArray = [qrActiveCorrectAnswer, "12", "14", "2"];
-        }
+    
+    if (studentGrade !== "7" && studentGrade !== "8" && studentGrade !== "9") {
+        studentGrade = "9";
     }
 
-    // Scramble option positions dynamically
-    optionsArray = [...new Set(optionsArray)]; // Remove any accidental duplicate options
+    const subjectPool = ARCADE_QUESTION_POOL[subject] || ARCADE_QUESTION_POOL["Math"];
+    const gradePool = subjectPool[studentGrade] || subjectPool["9"];
+    const availableQuestions = gradePool[qrSelectedDifficulty] || gradePool["easy"];
+    
+    const selected = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+    
+    let questionText = selected.q;
+    qrActiveCorrectAnswer = selected.a;
+    let optionsArray = [...selected.options];
+
+    optionsArray = [...new Set(optionsArray)];
     optionsArray.sort(() => Math.random() - 0.5);
     
-    // Inject contents cleanly into the HTML DOM Tree elements
     document.getElementById('qr-question-text').innerText = questionText;
     const box = document.getElementById('qr-options-box');
     
     if (box) {
         box.innerHTML = optionsArray.map(opt => `
-            <button class="qr-opt-card" onclick="processArcadeGuess('${opt}', '${subject}')">${opt}</button>
+            <button class="qr-opt-card" data-action="processArcadeGuess" data-arcade-opt="${opt}" data-arcade-subject="${subject}">${opt}</button>
         `).join('');
     } else {
         console.error("Critical Error: 'qr-options-box' element could not be found in the DOM.");
     }
 }
 
-// 4. GUESS EVALUATION MATRIX WITH FREEZING PUNISHMENT CORES
+// =========================================================================
+// UPDATED GUESS EVALUATION MATRIX WITH SCALED PENALTIES
+// =========================================================================
 function processArcadeGuess(chosenText, subject) {
     if (qrIsFrozen) return;
 
     if (chosenText === qrActiveCorrectAnswer) {
-        qrRunningPointsEarned += 2;
+        // Award scaled point totals based on difficulty levels
+        if (qrSelectedDifficulty === 'easy') {
+            qrRunningPointsEarned += 5;
+        } else if (qrSelectedDifficulty === 'medium') {
+            qrRunningPointsEarned += 25;
+        } else if (qrSelectedDifficulty === 'hard') {
+            qrRunningPointsEarned += 100;
+        }
+
         document.getElementById('qr-running-score').innerText = qrRunningPointsEarned;
         injectNextArcadeQuestion(subject);
     } else {
-        qrRunningPointsEarned = Math.max(0, qrRunningPointsEarned - 1);
+        // NEW FIXED LOGIC: Subtract penalty amounts matching the difficulty parameters
+        let penaltyAmount = 1;
+        if (qrSelectedDifficulty === 'easy') {
+            penaltyAmount = 5;
+        } else if (qrSelectedDifficulty === 'medium') {
+            penaltyAmount = 25;
+        } else if (qrSelectedDifficulty === 'hard') {
+            penaltyAmount = 100;
+        }
+
+        qrRunningPointsEarned = Math.max(0, qrRunningPointsEarned - penaltyAmount);
         document.getElementById('qr-running-score').innerText = qrRunningPointsEarned;
         
-        // Trigger 3-Second Locking Sequence
         qrIsFrozen = true;
         let penaltySecondsLeft = 5;
         
@@ -2169,7 +2333,6 @@ function processArcadeGuess(chosenText, subject) {
         const counterText = document.getElementById('qr-freeze-countdown');
         const cards = document.querySelectorAll('.qr-opt-card');
         
-        // Disable target arrays visually
         cards.forEach(c => c.disabled = true);
         counterText.innerText = penaltySecondsLeft;
         banner.classList.remove('hidden');
@@ -2182,7 +2345,6 @@ function processArcadeGuess(chosenText, subject) {
                 clearInterval(lockClock);
                 qrIsFrozen = false;
                 banner.classList.add('hidden');
-                // Auto load next puzzle node
                 injectNextArcadeQuestion(subject);
             }
         }, 1000);
@@ -2215,4 +2377,791 @@ function terminateQuickReactionMatch() {
     
     // Clean escape route out back to main screen dashboard layout views
     navigateTo('vGames');
+}
+
+// Delegated click handlers to keep actions working after DOM swaps
+document.addEventListener('click', (e) => {
+    const sel = 'button, [data-action], [data-nav], [data-learn-topic], [data-open-subject], [data-select-exercise], [data-toggle-password], [data-show-auth], [data-slide], [data-buy-theme], [data-buy-item], [data-confirm-logout], [data-reveal-id], [data-submit-derivation], [data-submit-direct], [data-toggle-solve], [data-finish-lesson]';
+    const btn = e.target.closest(sel);
+    if (!btn) return;
+
+    // LEARN buttons created dynamically use data-learn-topic
+    if (btn.dataset && btn.dataset.learnTopic) {
+        e.preventDefault();
+        triggerCrawler(btn.dataset.learnTopic);
+        return;
+    }
+    // Exercise: reveal solution / purchase
+    if (btn.dataset && btn.dataset.revealId) {
+        e.preventDefault();
+        const isSpecial = String(btn.dataset.revealSpecial) === 'true';
+        toggleExerciseSolution(btn.dataset.revealId, isSpecial);
+        return;
+    }
+    // Exercise: toggle solve panel
+    if (btn.dataset && btn.dataset.toggleSolve) {
+        e.preventDefault();
+        const panel = document.getElementById('solve-panel-' + btn.dataset.toggleSolve);
+        if (panel) panel.classList.toggle('hidden');
+        return;
+    }
+    // Exercise: submit derivation
+    if (btn.dataset && btn.dataset.submitDerivation) {
+        e.preventDefault();
+        submitDerivationSolution(btn.dataset.submitDerivation);
+        return;
+    }
+    // Exercise: submit direct answer
+    if (btn.dataset && btn.dataset.submitDirect) {
+        e.preventDefault();
+        submitDirectAnswer(btn.dataset.submitDirect, btn.dataset.correct);
+        return;
+    }
+
+    // Finish lesson button
+    if (btn.dataset && btn.dataset.finishLesson) {
+        e.preventDefault();
+        if (typeof finishLesson === 'function') finishLesson(btn.dataset.finishLesson);
+        return;
+    }
+
+    // Generic actions mapped by data-action
+    if (btn.dataset && btn.dataset.action) {
+        e.preventDefault();
+        const act = btn.dataset.action;
+        switch (act) {
+            case 'handleLogin': if (typeof handleLogin === 'function') handleLogin(); break;
+            case 'handleSignup': if (typeof handleSignup === 'function') handleSignup(); break;
+            case 'handleDailyClaim': if (typeof handleDailyClaim === 'function') handleDailyClaim(); break;
+            case 'processAndSaveVideo': if (typeof processAndSaveVideo === 'function') processAndSaveVideo(); break;
+            case 'searchTopics': if (typeof searchTopics === 'function') searchTopics(); break;
+            case 'handleQuickReactionEntry': if (typeof handleQuickReactionEntry === 'function') handleQuickReactionEntry(); break;
+            case 'startQuickReactionGame': if (typeof startQuickReactionGame === 'function') startQuickReactionGame(); break;
+            case 'closeExerciseModal': if (typeof closeExerciseModal === 'function') closeExerciseModal(); break;
+            case 'hideAlert': if (typeof hideAlert === 'function') hideAlert(); break;
+            case 'backToExerciseCategories': if (typeof backToExerciseCategories === 'function') backToExerciseCategories(); break;
+            case 'toggleSiblingHidden': 
+                // Toggle the next element's hidden class (for exercise tier dropdowns)
+                if (btn.nextElementSibling) {
+                    btn.nextElementSibling.classList.toggle('hidden');
+                }
+                break;
+            case 'closeTopicView':
+                if (typeof closeTopicView === 'function') closeTopicView();
+                break;
+            case 'exploreMore':
+                if (btn.dataset.exploreTopic && typeof exploreMore === 'function') {
+                    exploreMore(btn.dataset.exploreTopic);
+                }
+                break;
+            case 'deleteVideo':
+                if (btn.dataset.videoId && typeof deleteVideo === 'function') {
+                    deleteVideo(parseInt(btn.dataset.videoId, 10));
+                }
+                break;
+            case 'openLogoutDialog':
+                if (typeof openLogoutDialog === 'function') openLogoutDialog();
+                break;
+            case 'processArcadeGuess':
+                if (btn.dataset.arcadeOpt && btn.dataset.arcadeSubject && typeof processArcadeGuess === 'function') {
+                    processArcadeGuess(btn.dataset.arcadeOpt, btn.dataset.arcadeSubject);
+                }
+                break;
+            default:
+                // Unknown action: try calling a global function by name
+                if (typeof window[act] === 'function') window[act]();
+        }
+        return;
+    }
+
+    // Show auth page toggles (signup/login)
+    if (btn.dataset && btn.dataset.showAuth) {
+        e.preventDefault();
+        if (typeof showAuthPage === 'function') showAuthPage(btn.dataset.showAuth);
+        return;
+    }
+
+    // Toggle password visibility
+    if (btn.dataset && btn.dataset.togglePassword) {
+        e.preventDefault();
+        togglePasswordVisibility(btn.dataset.togglePassword);
+        return;
+    }
+
+    // Navigation via data-nav (optionally with tab id in data-nav-tab)
+    if (btn.dataset && btn.dataset.nav) {
+        e.preventDefault();
+        const view = btn.dataset.nav;
+        let tabEl = null;
+        if (btn.dataset.navTab) tabEl = document.getElementById(btn.dataset.navTab);
+        navigateTo(view, tabEl || btn);
+        return;
+    }
+
+    // slide dots
+    if (btn.dataset && btn.dataset.slide) {
+        e.preventDefault();
+        manualSlide(parseInt(btn.dataset.slide,10) || 0);
+        return;
+    }
+
+    // Open subject from Ebooks
+    if (btn.dataset && btn.dataset.openSubject) {
+        e.preventDefault();
+        if (typeof openSubject === 'function') openSubject(btn.dataset.openSubject);
+        return;
+    }
+
+    // Select exercise category
+    if (btn.dataset && btn.dataset.selectExercise) {
+        e.preventDefault();
+        if (typeof selectExerciseCategory === 'function') selectExerciseCategory(btn.dataset.selectExercise);
+        return;
+    }
+
+    // Buy theme or item
+    if (btn.dataset && btn.dataset.buyTheme) {
+        e.preventDefault();
+        const cost = parseInt(btn.dataset.cost,10) || 0;
+        if (typeof handleThemeAction === 'function') handleThemeAction(btn.dataset.buyTheme, cost);
+        return;
+    }
+    if (btn.dataset && btn.dataset.buyItem) {
+        e.preventDefault();
+        const cost = parseInt(btn.dataset.cost,10) || 0;
+        if (typeof handleItemAction === 'function') handleItemAction(btn.dataset.buyItem, cost);
+        return;
+    }
+
+    // Confirm logout modal buttons
+    if (btn.dataset && typeof btn.dataset.confirmLogout !== 'undefined') {
+        e.preventDefault();
+        const val = String(btn.dataset.confirmLogout) === 'true';
+        confirmLogout(val);
+        return;
+    }
+});
+
+// =========================================================================
+// COORD-INTEGRATED 60-WORD ACADEMIC CROSSWORD SYSTEM DATABASE
+// =========================================================================
+const CROSSWORD_SUBJECTS_CONFIG = [
+    { value: "Biology", label: "Biology" },
+    { value: "EarthScience", label: "Earth Science" }
+];
+
+const CROSSWORD_DATABASE = {
+    Biology: {
+        "7": [
+            { word: "CELL", num: 1, x: 0, y: 0, dir: "A", hint: "The fundamental structural unit of living things." },
+            { word: "ORGANISM", num: 5, x: 4, y: 0, dir: "A", hint: "An individual living thing like a plant or animal." },
+            { word: "TISSUE", num: 2, x: 3, y: 0, dir: "D", hint: "Group of similar cells working together." },
+            { word: "ORGAN", num: 3, x: 0, y: 3, dir: "A", hint: "Structure of tissues working together (e.g. Heart)." },
+            { word: "MICROSCOPE", num: 4, x: 1, y: 2, dir: "D", hint: "Optical instrument used to view tiny items." },
+            { word: "PROKARYOTE", num: 6, x: 0, y: 5, dir: "A", hint: "Simple cell missing a distinct nucleus structure." },
+            { word: "EUKARYOTE", num: 7, x: 2, y: 4, dir: "D", hint: "Complex cell containing a clear bound nucleus." },
+            { word: "PLANT", num: 8, x: 0, y: 8, dir: "A", hint: "Multicellular organism producing food via sunlight." },
+            { word: "ANIMAL", num: 9, x: 5, y: 6, dir: "D", hint: "Multicellular organism that must eat others for fuel." },
+            { word: "BACTERIA", num: 10, x: 3, y: 11, dir: "A", hint: "Microscopic single-celled prokaryotic bugs." }
+        ],
+        "8": [
+            { word: "DIGESTION", num: 1, x: 0, y: 1, dir: "A", hint: "Breaking down food into basic nutrients." },
+            { word: "RESPIRATION", num: 2, x: 2, y: 0, dir: "D", hint: "Biochemical process releasing chemical energy." },
+            { word: "OSMOSIS", num: 3, x: 0, y: 4, dir: "A", hint: "Diffusion of water across a membrane barrier." },
+            { word: "ENZYME", num: 4, x: 5, y: 2, dir: "D", hint: "Protein catalyst speeding up metabolic operations." },
+            { word: "CIRCULATION", num: 5, x: 0, y: 7, dir: "A", hint: "Movement of blood or fluid around body tracks." },
+            { word: "BLOOD", num: 6, x: 1, y: 6, dir: "D", hint: "Fluid pumping through the heart and vessels." },
+            { word: "HEART", num: 7, x: 6, y: 5, dir: "A", hint: "Muscular pump directing blood operations." },
+            { word: "LUNGS", num: 8, x: 8, y: 4, dir: "D", hint: "Gas exchange respiratory organs for air breathing." },
+            { word: "NUTRIENT", num: 9, x: 2, y: 10, dir: "A", hint: "Nourishment chemical vital for sustainable life." },
+            { word: "EXCRETION", num: 10, x: 10, y: 2, dir: "D", hint: "Eliminating metabolic garbage from bodies." }
+        ],
+        "9": [
+            { word: "NUCLEUS", num: 1, x: 0, y: 1, dir: "A", hint: "Control command center holding genetic DNA blocks." },
+            { word: "MITOCHONDRIA", num: 2, x: 1, y: 0, dir: "D", hint: "Power houses producing cellular energy outputs." },
+            { word: "CHLOROPLAST", num: 3, x: 0, y: 4, dir: "A", hint: "Plant organelle capture space where sunlight transforms." },
+            { word: "PHOTOSYNTHESIS", num: 4, x: 3, y: 0, dir: "D", hint: "Light-driven method synthesizing sugar fuels." },
+            { word: "MITOSIS", num: 5, x: 0, y: 7, dir: "A", hint: "Nuclear cell division split generating clones." },
+            { word: "CHROMOSOME", num: 6, x: 5, y: 3, dir: "D", hint: "Thread structural array handling genetic links." },
+            { word: "DNA", num: 7, x: 0, y: 10, dir: "A", hint: "Double helix containing instruction data patterns." },
+            { word: "GENE", num: 8, x: 8, y: 6, dir: "D", hint: "Hereditary sequence code driving custom traits." },
+            { word: "RIBOSOME", num: 9, x: 3, y: 9, dir: "A", hint: "Tiny engine assembling string amino structures." },
+            { word: "CYTOPLASM", num: 10, x: 10, y: 1, dir: "D", hint: "Jelly filling inside cell boundary walls." }
+        ]
+    },
+    EarthScience: {
+        "7": [
+            { word: "ATMOSPHERE", num: 1, x: 0, y: 1, dir: "A", hint: "Gaseous envelope protective shield surrounding worlds." },
+            { word: "WEATHERING", num: 2, x: 2, y: 0, dir: "D", hint: "Breaking down surface rocks into dust matrices." },
+            { word: "EROSION", num: 3, x: 0, y: 4, dir: "A", hint: "Moving loose surface fragments via wind or currents." },
+            { word: "SEDIMENT", num: 4, x: 5, y: 2, dir: "D", hint: "Solid pieces layer settling out down in channels." },
+            { word: "MINERAL", num: 5, x: 0, y: 7, dir: "A", hint: "Inorganic solid showing consistent crystal lines." },
+            { word: "ROCK", num: 6, x: 0, y: 10, dir: "A", hint: "Solid mix composite formed out of crystal groupings." },
+            { word: "IGNEOUS", num: 7, x: 7, y: 4, dir: "D", hint: "Fire rock cooled out of molten lava configurations." },
+            { word: "MAGMA", num: 8, x: 4, y: 6, dir: "A", hint: "Liquid molten rock running under surface crust levels." },
+            { word: "LAVA", num: 9, x: 9, y: 6, dir: "D", hint: "Molten stone vented up through crust fractures." },
+            { word: "CRUST", num: 10, x: 1, y: 9, dir: "A", hint: "Outermost layer shell formatting planetary decks." }
+        ],
+        "8": [
+            { word: "MANTLE", num: 1, x: 0, y: 1, dir: "A", hint: "Heavy internal hot rock segment under outer shells." },
+            { word: "CORE", num: 2, x: 2, y: 0, dir: "D", hint: "Ultra dense central iron sphere of planetary systems." },
+            { word: "EARTHQUAKE", num: 3, x: 0, y: 4, dir: "A", hint: "Violent tremor release from sliding fault friction." },
+            { word: "VOLCANO", num: 4, x: 4, y: 2, dir: "D", hint: "Venting mountain mountain dynamic throwing fire ash." },
+            { word: "PLATE", num: 5, x: 0, y: 7, dir: "A", hint: "Massive moving section puzzle chunk of lithosphere." },
+            { word: "TSUNAMI", num: 6, x: 6, y: 5, dir: "D", hint: "Harbor wave series triggered by marine shifts." },
+            { word: "FAULT", num: 7, x: 1, y: 9, dir: "A", hint: "Cracked displacement gap separating crust sections." },
+            { word: "SEISMIC", num: 8, x: 8, y: 4, dir: "D", hint: "Vibrational energy wave running from structural hits." },
+            { word: "FOSSIL", num: 9, x: 5, y: 11, dir: "A", hint: "Stone cast or track of ancient biological lifelines." },
+            { word: "GEOLOGY", num: 10, x: 10, y: 0, dir: "D", hint: "Science charting physical history and shifts of stone." }
+        ],
+        "9": [
+            { word: "METAMORPHIC", num: 1, x: 0, y: 1, dir: "A", hint: "Stone modified inside via pressure and deep cook shifts." },
+            { word: "TECTONICS", num: 2, x: 2, y: 0, dir: "D", hint: "Structural study mapping crust dynamic plate drifting." },
+            { word: "PANGEA", num: 3, x: 0, y: 4, dir: "A", hint: "Ancient massive supercontinent linking old shore maps." },
+            { word: "GLACIER", num: 4, x: 5, y: 2, dir: "D", hint: "Enormous slow river of creeping frozen pack ice." },
+            { word: "CYCLE", num: 5, x: 0, y: 7, dir: "A", hint: "Continuous systemic loop path shifting stone profiles." },
+            { word: "CONVECTION", num: 6, x: 7, y: 1, dir: "D", hint: "Thermal flow drift driving interior mantle systems." },
+            { word: "TRENCH", num: 7, x: 3, y: 9, dir: "A", hint: "Abyssal subduction slice valley carving sea floors." },
+            { word: "SUBDUCTION", num: 8, x: 9, y: 0, dir: "D", hint: "Overriding action forcing plates down to core paths." },
+            { word: "TOPOGRAPHY", num: 9, x: 0, y: 11, dir: "A", hint: "Surface terrain outline relief configurations maps." },
+            { word: "BIOSPHERE", num: 10, x: 11, y: 2, dir: "D", hint: "Global zone network hosting all living life units." }
+        ]
+    }
+};
+
+// State Parameters
+let cwActiveDataset = [];
+let cwStopwatchInstance = null;
+let cwSecondsElapsed = 0;
+let cwActiveSelectedCell = null; 
+let cwActiveClue = null;
+
+function initCrosswordLobby() {
+    const selectEl = document.getElementById('cw-subject-select');
+    if (!selectEl) return;
+    selectEl.innerHTML = CROSSWORD_SUBJECTS_CONFIG.map(sub => 
+        `<option value="${sub.value}">${sub.label}</option>`
+    ).join('');
+}
+
+function startCrosswordGame() {
+    const selectEl = document.getElementById('cw-subject-select');
+    if (selectEl && selectEl.options.length === 0) initCrosswordLobby();
+    
+    const subject = selectEl ? selectEl.value : "Biology";
+    let studentGrade = "9"; 
+    
+    if (window.u && window.userDB && userDB[u] && userDB[u].grade) studentGrade = String(userDB[u].grade);
+    else if (window.currentAccount && currentAccount.grade) studentGrade = String(currentAccount.grade);
+    if (!["7", "8", "9"].includes(studentGrade)) studentGrade = "9";
+
+    const subjectCategory = CROSSWORD_DATABASE[subject] || CROSSWORD_DATABASE["Biology"];
+    cwActiveDataset = subjectCategory[studentGrade] || subjectCategory["9"];
+    
+    document.getElementById('cw-game-subject').innerText = `🧩 Crossword: ${subject} (Grade ${studentGrade})`;
+    
+    if (window.bottomNav) window.bottomNav.classList.add('hidden');
+    const bNav = document.getElementById('bottom-nav');
+    if (bNav) bNav.classList.add('hidden');
+    
+    // Timer Loop
+    cwSecondsElapsed = 0;
+    document.getElementById('cw-stopwatch').innerText = "00:00";
+    clearInterval(cwStopwatchInstance);
+    cwStopwatchInstance = setInterval(() => {
+        cwSecondsElapsed++;
+        const m = String(Math.floor(cwSecondsElapsed / 60)).padStart(2, '0');
+        const s = String(cwSecondsElapsed % 60).padStart(2, '0');
+        document.getElementById('cw-stopwatch').innerText = `${m}:${s}`;
+    }, 1000);
+
+    cwActiveSelectedCell = null;
+    cwActiveClue = null;
+    document.getElementById('cw-active-clue-text').innerText = "Select any grid square or clue item to begin.";
+
+    buildCrosswordMatrixGrid();
+    buildQWERTYKeyboard();
+    
+    if (typeof navigateTo === "function") {
+        try { navigateTo('CrosswordGameView'); } catch(e) { forceDirectViewShow(); }
+    } else {
+        forceDirectViewShow();
+    }
+}
+
+function buildCrosswordMatrixGrid() {
+    const board = document.getElementById('crossword-matrix-board');
+    const acrossBox = document.getElementById('cw-across-clues-container');
+    const downBox = document.getElementById('cw-down-clues-container');
+    
+    board.innerHTML = "";
+    acrossBox.innerHTML = "";
+    downBox.innerHTML = "";
+
+    const gridDim = 12;
+    const cellMap = Array(gridDim).fill(null).map(() => Array(gridDim).fill(null));
+
+    cwActiveDataset.forEach((item) => {
+        let currentX = item.x;
+        let currentY = item.y;
+        
+        for (let i = 0; i < item.word.length; i++) {
+            if (currentX >= gridDim || currentY >= gridDim) break;
+            
+            if (!cellMap[currentY][currentX]) {
+                cellMap[currentY][currentX] = {
+                    letter: item.word[i],
+                    numLabel: (i === 0) ? item.num : null,
+                    cluesBelong: []
+                };
+            } else if (i === 0 && !cellMap[currentY][currentX].numLabel) {
+                cellMap[currentY][currentX].numLabel = item.num;
+            }
+            
+            cellMap[currentY][currentX].cluesBelong.push(item);
+            
+            if (item.dir === "A") currentX++;
+            else currentY++;
+        }
+    });
+
+    for (let r = 0; r < gridDim; r++) {
+        for (let c = 0; c < gridDim; c++) {
+            const data = cellMap[r][c];
+            const cellDiv = document.createElement('div');
+            
+            if (!data) {
+                cellDiv.className = "cw-cell black-cell";
+            } else {
+                cellDiv.className = "cw-cell white-cell";
+                cellDiv.setAttribute('data-x', c);
+                cellDiv.setAttribute('data-y', r);
+                cellDiv.setAttribute('data-solution', data.letter);
+                cellDiv.setAttribute('data-current', "");
+
+                if (data.numLabel) {
+                    const numTag = document.createElement('div');
+                    numTag.className = "cw-cell-num";
+                    numTag.innerText = data.numLabel;
+                    cellDiv.appendChild(numTag);
+                }
+
+                const txtNode = document.createElement('div');
+                txtNode.className = "cw-cell-input";
+                cellDiv.appendChild(txtNode);
+
+                cellDiv.onclick = () => handleCellSelection(cellDiv, data.cluesBelong[0]);
+            }
+            board.appendChild(cellDiv);
+        }
+    }
+
+    cwActiveDataset.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = "cw-clue-item";
+        itemDiv.setAttribute('id', `clue-${item.dir}-${item.num}`);
+        itemDiv.innerHTML = `<strong>${item.num}.</strong> <span>${item.hint}</span>`;
+        
+        itemDiv.onclick = () => {
+            highlightActiveClueTrack(item);
+            const startCell = document.querySelector(`.cw-cell[data-x='${item.x}'][data-y='${item.y}']`);
+            if (startCell) handleCellSelection(startCell, item);
+        };
+
+        if (item.dir === "A") acrossBox.appendChild(itemDiv);
+        else downBox.appendChild(itemDiv);
+    });
+}
+
+// NEW METHOD: COMPILING NATIVE VIRTUAL DRIVER RACK ELEMENTS
+function buildQWERTYKeyboard() {
+    const container = document.getElementById('cw-keyboard-container');
+    if (!container) return;
+    container.innerHTML = "";
+
+    const qwertyRows = [
+        ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+        ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+        ["Z", "X", "C", "V", "B", "N", "M", "⌫"]
+    ];
+
+    qwertyRows.forEach(rowKeys => {
+        const rowDiv = document.createElement('div');
+        rowDiv.style.display = "flex";
+        rowDiv.style.gap = "5px";
+        rowDiv.style.width = "100%";
+        rowDiv.style.justifyContent = "center";
+
+        rowKeys.forEach(keyText => {
+            const btn = document.createElement('button');
+            btn.className = "cw-key-cap";
+            btn.innerText = keyText;
+            
+            // Inline Keyboard Styling Engine Matrix Rules
+            Object.assign(btn.style, {
+                background: keyText === "⌫" ? "#e74c3c" : "#34495e",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "5px",
+                padding: "12px 0",
+                fontSize: "15px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                flex: keyText === "⌫" ? "1.5" : "1",
+                minWidth: "28px",
+                maxWidth: "50px",
+                boxShadow: "0 3px 0 #1a252f",
+                transition: "all 0.05s ease",
+                textAlign: "center"
+            });
+
+            btn.onmousedown = () => {
+                btn.style.transform = "translateY(2px)";
+                btn.style.boxShadow = "0 1px 0 #1a252f";
+            };
+
+            btn.onmouseup = () => {
+                btn.style.transform = "translateY(0px)";
+                btn.style.boxShadow = "0 3px 0 #1a252f";
+            };
+
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                handleKeyboardPress(keyText);
+            };
+
+            rowDiv.appendChild(btn);
+        });
+
+        container.appendChild(rowDiv);
+    });
+}
+
+function handleCellSelection(cell, primaryClue) {
+    document.querySelectorAll('.cw-cell').forEach(c => c.classList.remove('active-focus'));
+    cell.classList.add('active-focus');
+    cwActiveSelectedCell = cell;
+
+    if (primaryClue) {
+        highlightActiveClueTrack(primaryClue);
+    }
+}
+
+function handleKeyboardPress(char) {
+    if (!cwActiveSelectedCell) return;
+    
+    const inputDiv = cwActiveSelectedCell.querySelector('.cw-cell-input');
+    if (!inputDiv) return;
+
+    if (char === "⌫") {
+        inputDiv.innerText = "";
+        cwActiveSelectedCell.setAttribute('data-current', "");
+    } else {
+        inputDiv.innerText = char;
+        cwActiveSelectedCell.setAttribute('data-current', char);
+        
+        // Auto-advance cursor logic to the next interlocking cell sequence
+        advanceToNextGridSquare();
+    }
+
+    evaluateGridValidation();
+}
+
+function advanceToNextGridSquare() {
+    if (!cwActiveClue || !cwActiveSelectedCell) return;
+
+    let cx = parseInt(cwActiveSelectedCell.getAttribute('data-x'));
+    let cy = parseInt(cwActiveSelectedCell.getAttribute('data-y'));
+
+    if (cwActiveClue.dir === "A") cx++; else cy++;
+
+    const nextCell = document.querySelector(`.cw-cell[data-x='${cx}'][data-y='${cy}']`);
+    if (nextCell && nextCell.classList.contains('white-cell')) {
+        document.querySelectorAll('.cw-cell').forEach(c => c.classList.remove('active-focus'));
+        nextCell.classList.add('active-focus');
+        cwActiveSelectedCell = nextCell;
+    }
+}
+
+function highlightActiveClueTrack(clue) {
+    cwActiveClue = clue;
+    const tag = clue.dir === "A" ? "ACROSS" : "DOWN";
+    document.getElementById('cw-active-clue-text').innerText = `(${clue.num} ${tag}): ${clue.hint}`;
+    
+    document.querySelectorAll('.cw-clue-item').forEach(i => i.classList.remove('active-clue-selection'));
+    const currentItem = document.getElementById(`clue-${clue.dir}-${clue.num}`);
+    if (currentItem) currentItem.classList.add('active-clue-selection');
+
+    document.querySelectorAll('.cw-cell').forEach(c => c.classList.remove('word-highlight'));
+    
+    let cx = clue.x;
+    let cy = clue.y;
+    for (let i = 0; i < clue.word.length; i++) {
+        const target = document.querySelector(`.cw-cell[data-x='${cx}'][data-y='${cy}']`);
+        if (target) target.classList.add('word-highlight');
+        if (clue.dir === "A") cx++; else cy++;
+    }
+}
+
+function evaluateGridValidation() {
+    const activeWhiteCells = document.querySelectorAll('.cw-cell.white-cell');
+    let totalCorrectCells = 0;
+
+    activeWhiteCells.forEach(cell => {
+        const sol = cell.getAttribute('data-solution');
+        const cur = cell.getAttribute('data-current');
+        if (sol === cur) totalCorrectCells++;
+    });
+
+    if (totalCorrectCells === activeWhiteCells.length) {
+        clearInterval(cwStopwatchInstance);
+        activeWhiteCells.forEach(cell => cell.classList.add('correct-animate'));
+
+        if (window.u && window.userDB && userDB[u]) {
+            userDB[u].points = (userDB[u].points || 0) + 200;
+            if (typeof saveAndSync === "function") saveAndSync();
+        }
+
+        setTimeout(() => {
+            if (typeof showAlert === "function") {
+                showAlert("🧩 Crossword Solved!", `Excellent work! Grid locked flawlessly in ${document.getElementById('cw-stopwatch').innerText}! Received +200 PTS.`, "success");
+            } else {
+                alert(`🧩 Crossword Solved! Complete time profile: ${document.getElementById('cw-stopwatch').innerText}! Earned 200 PTS.`);
+            }
+            exitCrosswordMatch();
+        }, 500);
+    }
+}
+
+function exitCrosswordMatch() {
+    clearInterval(cwStopwatchInstance);
+    if (window.bottomNav) window.bottomNav.classList.remove('hidden');
+    const bNav = document.getElementById('bottom-nav');
+    if (bNav) bNav.classList.remove('hidden');
+    
+    if (typeof navigateTo === "function") {
+        navigateTo('vGames'); 
+    } else {
+        const view = document.getElementById('CrosswordGameView');
+        if (view) view.classList.add('hidden');
+    }
+}
+
+// System initializers hooks mapping structures
+initCrosswordLobby();
+document.addEventListener('DOMContentLoaded', initCrosswordLobby);
+
+// Complete translation dictionary for NGS Yukunthor - LearningIsFun
+const APP_TRANSLATION_DICTIONARY = {
+    // Global & Headers
+    "ngs yukunthor - learningisfun - beta v.1.0": "សាលារៀនជំនាន់ថ្មីព្រះយុគន្ធរ - ការសិក្សាពិតជាសប្បាយ - BETA v.1.0",
+    "learningisfun - beta": "ការសិក្សាពិតជាសប្បាយ - BETA",
+    "student": "សិស្ស",
+    "username": "ឈ្មោះអ្នកប្រើប្រាស់",
+    "password": "លេខកូដសម្ងាត់",
+    "grade": "ថ្នាក់ទី",
+    "rank": "ចំណាត់ថ្នាក់",
+    "hours": "ម៉ោង",
+    "novice": "អ្នកទើបចាប់ផ្តើម",
+
+    // Authentication Layer (Login / Sign Up)
+    "ngs login": "ចូលប្រព័ន្ធ NGS",
+    "enter username": "វាយបញ្ចូលឈ្មោះអ្នកប្រើប្រាស់",
+    "enter password": "វាយបញ្ចូលលេខកូដសម្ងាត់",
+    "login": "ចូលប្រព័ន្ធ",
+    "new student?": "សិស្សថ្មីមែនទេ?",
+    "sign up": "ចុះឈ្មោះ",
+    "create username": "បង្កើតឈ្មោះអ្នកប្រើប្រាស់",
+    "create password": "បង្កើតលេខកូដសម្ងាត់",
+    "gender": "ភេទ",
+    "male": "ប្រុស",
+    "female": "ស្រី",
+    "select grade": "ជ្រើសរើសថ្នាក់",
+    "grade 7": "ថ្នាក់ទី ៧",
+    "grade 8": "ថ្នាក់ទី ៨",
+    "grade 9": "ថ្នាក់ទី ៩",
+    "create account": "បង្កើតគណនី",
+    "back to": "ត្រឡប់ទៅ",
+
+    // Home View Slider
+    "enrollment 2026": "ការចុះឈ្មោះចូលរៀនឆ្នាំ ២០២៦",
+    "unlock your potential at ngs preah yukunthor high school. the entrance exam starts soon.": "ពង្រីកសក្តានុពលរបស់អ្នកនៅវិទ្យាល័យសាលារៀនជំនាន់ថ្មី ព្រះយុគន្ធរ។ ការប្រឡងចូលរៀននឹងចាប់ផ្តើមឆាប់ៗនេះ។",
+    "character quest": "បេសកកម្មតួអង្គ",
+    "earn points to customize your avatar and theme!": "ស្វែងរកពិន្ទុដើម្បីផ្លាស់ប្តូររូបតំណាង និងប្រធានបទរបស់អ្នក!",
+    "app in development": "កម្មវិធីកំពុងអភិវឌ្ឍន៍",
+    "we are currently testing and running our app as much as possible. please report if there's bugs or errors. thank you!": "យើងកំពុងសាកល្បង និងដំណើរការកម្មវិធីរបស់យើងឱ្យអស់ពីលទ្ធភាព។ សូមរាយការណ៍មកយើងប្រសិនបើមានកំហុសឆ្គង។ សូមអរគុណ!",
+
+    // Main Menu / Grid Items
+    "avatar": "រូបតំណាង",
+    "e-books (v1.0)": "សៀវភៅអេឡិចត្រូនិច (v1.0)",
+    "exercises (v1.0)": "លំហាត់អនុវត្ត (v1.0)",
+    "quiz (work in progress)": "កម្រងសំណួរ (កំពុងរៀបចំ)",
+    "fun games (work in progress)": "ហ្គេមកំសាន្ត (កំពុងរៀបចំ)",
+
+    // Settings Menu
+    "menu": "មីនុយ",
+    "point shop": "ហាងប្តូរពិន្ទុ",
+    "exchange points for themes and items": "ប្តូរពិន្ទុសម្រាប់ប្រធានបទ និងសម្ភារៈផ្សេងៗ",
+    "notifications": "ការជូនដំណឹង",
+    "stay updated on new assignments": "ទទួលបានព័ត៌មានថ្មីៗអំពីកិច្ចការសាលា",
+    "logout": "ចាកចេញ",
+    "exit your current session": "ចាកចេញពីគណនីរបស់អ្នក",
+
+    // Point Shop Items
+    "back to settings": "ត្រឡប់ទៅកាន់ការកំណត់",
+    "crimson void": "ដែនដីក្រហមឆ្អៅ",
+    "cost: 500 points": "តម្លៃ៖ ៥០០ ពិន្ទុ",
+    "buy theme": "ទិញប្រធានបទ",
+    "mystical golden aura": "ពន្លឺមន្តអាគមពណ៌មាស",
+    "buy aura": "ទិញពន្លឺ aura",
+    "custom cursor": "ទស្សន៍ទ្រនិចពិសេស",
+    "cost: 1000 points": "តម្លៃ៖ ១០០០ ពិន្ទុ",
+    "buy cursor": "ទិញទស្សន៍ទ្រនិច",
+    "daily bonus": "ប្រាក់រង្វាន់ប្រចាំថ្ងៃ",
+    "loading timer": "កំពុងដំណើរការកម្មវិធីកំណត់ម៉ោង",
+    "claim 100 pts": "ទទួលបាន ១០០ ពិន្ទុ",
+
+    // All About Us
+    "all about us": "អំពីយើងទាំងអស់គ្នា",
+    "our vision & mission": "ចក្ខុវិស័យ និងបេសកកម្មរបស់យើង",
+    "we are dedicated to building interactive, high-performance web systems and gaming simulators. by combining elegant styling matrices with robust programmatic engines, we deliver exceptional software solutions. we make learning enjoyable again!": "យើងប្តេជ្ញាចិត្តក្នុងការបង្កើតប្រព័ន្ធគេហទំព័រដែលមានអន្តរកម្ម ប្រសិទ្ធភាពខ្ពស់ និងកម្មវិធីត្រាប់តាមហ្គេម។ ដោយការរួមបញ្ចូលគ្នានូវរចនាស្ទីលដ៏ស្រស់ស្អាតជាមួយនឹងកូដដ៏រឹងមាំ យើងផ្តល់ជូននូវដំណោះស្រាយកម្មវិធីដ៏ល្អឥតខ្ចោះ។ យើងធ្វើឱ្យការរៀនសូត្រក្លាយជារឿងសប្បាយរីករាយម្តងទៀត!",
+    "our team": "ក្រុមការងាររបស់យើង",
+    "programmer / developer": "អ្នកសរសេរកម្មវិធី / អ្នកអភិវឌ្ឍន៍",
+    "developed most of the working systems. brought ideas into code (mostly). lacks sleep from it.": "អ្នកបង្កើតប្រព័ន្ធដំណើរការភាគច្រើន។ បំប្លែងគំនិតទៅជាកូដ (ភាគច្រើន)។ មិនសូវបានគេងដោយសារវា។",
+    "graphics and theme designer": "អ្នករចនាក្រាហ្វិក និងប្រធានបទ",
+    "helps design the themes. bug fixes and error patcher. the posters are his work of art.": "ជួយរចនាប្រធានបទផ្សេងៗ។ កែសម្រួលប្រព័ន្ធ និងដោះស្រាយបញ្ហាកូដ។ ផ្ទាំងរូបភាពផ្សព្វផ្សាយគឺជាស្នាដៃសិល្បៈរបស់គាត់។",
+    "brainstormer and editor": "អ្នកបង្កើតគំនិត និងអ្នកកែសម្រួល",
+    "brought up the ideas. brainstorms the solutions. navigated bugs and errors.": "អ្នកផ្តួចផ្តើមគំនិត។ ស្វែងរកដំណោះស្រាយ និងតាមដានរាល់បញ្ហាកូដផ្សេងៗ។",
+    "⚡ operational pillars": "⚡ សសរស្តម្ភប្រតិបត្តិការ",
+    "performance matrix": "រចនាសម្ព័ន្ធប្រសិទ្ធភាព",
+    "optimizing scripts for sub-millisecond execution loops and fast renders.": "បង្កើនប្រសិទ្ធភាពកូដសម្រាប់ការដំណើរការលឿនបំផុត និងការបង្ហាញរហ័ស។",
+    "fluid interactivity": "អន្តរកម្មរលូន",
+    "replacing standard static controls with real-time responsive gaming assets.": "ជំនួសការគ្រប់គ្រងឋិតិវន្តស្តង់ដារជាមួយធនធានហ្គេមដែលឆ្លើយតបភ្លាមៗ។",
+    "data consistency": "ភាពស៊ីសង្វាក់គ្នានៃទិន្នន័យ",
+    "preserving player states, currency shop inventory, and cooldown logs securely.": "រក្សាទុកស្ថានភាពអ្នកលេង បញ្ជីសារពើភណ្ឌហាង និងកំណត់ហេតុ cooldown ដោយសុវត្ថិភាព។",
+
+    // Online Library / Smart Library
+    "online library (beta)": "បណ្ណាល័យអនឡាញ (BETA)",
+    "paste link to save video": "ចម្លងតំណភ្ជាប់ទីនេះដើម្បីរក្សាទុកវីដេអូ",
+    "paste youtube link here...": "ចម្លងតំណភ្ជាប់ YouTube ដាក់ទីនេះ...",
+    "video title (e.g. math lesson 1)": "ចំណងជើងវីដេអូ (ឧទាហរណ៍៖ មេរៀនគណិតវិទ្យា ទី១)",
+    "fetch & save video": "ទាញយក និងរក្សាទុកវីដេអូ",
+    "back to library": "ត្រឡប់ទៅបណ្ណាល័យ",
+    "reading...": "កំពុងអាន...",
+    "smart library": "បណ្ណាល័យវៃឆ្លាត",
+    "search topics...": "ស្វែងរកប្រធានបទ...",
+    "mathematics": "គណិតវិទ្យា",
+    "math": "គណិតវិទ្យា",
+    "physics": "រូបវិទ្យា",
+    "chemistry": "គីមីវិទ្យា",
+    "biology": "ជីវវិទ្យា",
+    "earth science": "ផែនដីវិទ្យា",
+    "back to subjects": "ត្រឡប់ទៅមុខវិជ្ជា",
+
+    // Quiz & Exercises
+    "back": "ត្រឡប់ក្រោយ",
+    "*complete a lesson in ebooks to unlock 2 true/false questions.*": "*សូមបញ្ចប់មេរៀននៅក្នុងសៀវភៅអេឡិចត្រូនិច ដើម្បីបើកសំណួរ ពិត/មិនពិត ចំនួន២។*",
+    "student exercises": "លំហាត់អនុវត្តសម្រាប់សិស្ស",
+    "choose category to explore structured files": "ជ្រើសរើសប្រភេទមុខវិជ្ជាដើម្បីស្វែងរកឯកសារ",
+    "← back to categories": "← ត្រឡប់ទៅកាន់ផ្នែកផ្សេងៗ",
+
+    // Arcade & Games
+    "🕹️ academic arcade": "🕹️ កន្លែងហ្គេមសិក្សា",
+    "test your knowledge, beat the clock, and earn wallet point rewards!": "សាកល្បងចំណេះដឹងរបស់អ្នក ប្រកួតជាមួយពេលវេលា និងឈ្នះរង្វាន់ពិន្ទុ!",
+    "⚡ quick reaction": "⚡ ប្រតិកម្មរហ័ស",
+    "perfect for calculating disciplines like math, chemistry, and physics. solve rapid-fire multiple-choice problems before time expires!": "ល្អឥតខ្ចោះសម្រាប់ការគណនាដូចជា គណិតវិទ្យា គីមីវិទ្យា និងរូបវិទ្យា។ ដោះស្រាយលំហាត់ពហុជ្រើសរើសលឿនៗមុនពេលអស់ពេល!",
+    "enter (beta)": "ចូលរួម (BETA)",
+    "🧩 crosswords": "🧩 ហ្គេមផ្គូផ្គងពាក្យ",
+    "tailored for descriptive modules. drag or click letters to match vocabulary words with scientific definitions.": "រៀបចំឡើងសម្រាប់មេរៀនពិពណ៌នា។ អូស ឬចុចអក្សរដើម្បីផ្គូផ្គងពាក្យជាមួយនិយមន័យវិទ្យាសាស្ត្រ។",
+    "select subject:": "ជ្រើសរើសមុខវិជ្ជា៖",
+    "play now": "លេងឥឡូវនេះ",
+    "← back to arcade": "← ត្រឡប់ទៅកាន់កន្លែងហ្គេម",
+    "setup arena parameters": "រៀបចំប៉ារ៉ាម៉ែត្រទីលានប្រកួត",
+    "1. select subject:": "១. ជ្រើសរើសមុខវិជ្ជា៖",
+    "2. select difficulty:": "២. ជ្រើសរើសកម្រិតលំបាក៖",
+    "easy (5 pts / correct)": "ងាយស្រួល (៥ ពិន្ទុ / ចម្លើយត្រឹមត្រូវ)",
+    "medium (25 pts / correct)": "មធ្យម (២៥ ពិន្ទុ / ចម្លើយត្រឹមត្រូវ)",
+    "hard (100 pts / correct)": "លំបាក (១០០ ពិន្ទុ / ចម្លើយត្រឹមត្រូវ)",
+    "3. select time limit:": "៣. ជ្រើសរើសកំណត់ពេលវេលា៖",
+    "30 seconds": "៣០ វិនាទី",
+    "60 seconds": "៦០ វិនាទី",
+    "90 seconds": "៩០ វិនាទី",
+    "start game⚡": "ចាប់ផ្តើមហ្គេម⚡",
+
+    // Active Game Interface
+    "time left:": "ពេលវេលានៅសល់៖",
+    "session record:": "កំណត់ត្រាប្រកួត៖",
+    "pts": "ពិន្ទុ",
+    "⚠️ incorrect answer, penalty applied! system locked for": "⚠️ ចម្លើយមិនត្រឹមត្រូវទេ ពិន័យត្រូវបានអនុវត្ត! ប្រព័ន្ធផ្អាកដំណើរការរយៈពេល",
+    "s...": "វិនាទី...",
+    "generating problem node...": "កំពុងបង្កើតប្រភពលំហាត់...",
+    "category: loading...": "ប្រភេទ៖ កំពុងដំណើរការ...",
+    "🏳️ leave": "🏳️ ចាកចេញ",
+    "select any box grid square or clue item to begin.": "ជ្រើសរើសប្រអប់ក្រឡាចត្រង្គ ឬតម្រុយណាមួយដើម្បីចាប់ផ្តើម។",
+    "clues": "តម្រុយ"
+};
+
+// Create a safe inverted English dictionary map
+const APP_ENGLISH_DICTIONARY = {};
+Object.keys(APP_TRANSLATION_DICTIONARY).forEach(engKey => {
+    APP_ENGLISH_DICTIONARY[APP_TRANSLATION_DICTIONARY[engKey]] = engKey;
+});
+
+/**
+ * Tree Walker Engine to dynamically translate text contents and input properties
+ */
+function translateDOMBranch(node, targetLanguage) {
+    // 1. Process Raw Text Nodes
+    if (node.nodeType === Node.TEXT_NODE) {
+        let cleanText = node.nodeValue.trim().toLowerCase();
+        
+        if (targetLanguage === "kh") {
+            if (APP_TRANSLATION_DICTIONARY[cleanText]) {
+                node.nodeValue = APP_TRANSLATION_DICTIONARY[cleanText];
+            }
+        } else if (targetLanguage === "en") {
+            if (APP_ENGLISH_DICTIONARY[node.nodeValue.trim()]) {
+                node.nodeValue = APP_ENGLISH_DICTIONARY[node.nodeValue.trim()];
+            }
+        }
+    } 
+    // 2. Process Input Field Placeholders
+    else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.tagName === "INPUT" && node.hasAttribute("placeholder")) {
+            let placeholderText = node.getAttribute("placeholder").trim().toLowerCase();
+            
+            if (targetLanguage === "kh") {
+                if (APP_TRANSLATION_DICTIONARY[placeholderText]) {
+                    node.setAttribute("data-orig-placeholder", node.getAttribute("placeholder"));
+                    node.setAttribute("placeholder", APP_TRANSLATION_DICTIONARY[placeholderText]);
+                }
+            } else if (targetLanguage === "en") {
+                if (node.hasAttribute("data-orig-placeholder")) {
+                    node.setAttribute("placeholder", node.getAttribute("data-orig-placeholder"));
+                }
+            }
+        }
+
+        // Recursively walk downward bypassing script layers
+        if (node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE' && node.tagName !== 'TEXTAREA') {
+            for (let i = 0; i < node.childNodes.length; i++) {
+                translateDOMBranch(node.childNodes[i], targetLanguage);
+            }
+        }
+    }
+}
+
+/**
+ * Connected Event Hook triggered by the dropdown select change
+ */
+function toggleAppLanguage(langCode) {
+    // Translate starting from the highest body block
+    translateDOMBranch(document.body, langCode);
+    
+    // Optional Document Title Page Translation Update
+    if (langCode === "kh") {
+        document.title = "សាលារៀនជំនាន់ថ្មីព្រះយុគន្ធរ - LearningIsFun";
+    } else {
+        document.title = "NGS Yukunthor - LearningIsFun - BETA v.1.0";
+    }
 }

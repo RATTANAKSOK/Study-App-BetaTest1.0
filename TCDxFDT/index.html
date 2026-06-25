@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,46 +11,44 @@
     <div id="authLayer" class="auth-wrapper">
         <div class="auth-card">
             <img src="Logo.png" class="auth-logo" alt="NGS Logo">
-            
             <div id="loginForm">
                 <h1 class="auth-header">NGS LOGIN</h1>
                 <div class="input-field-group">
-                    <label class="input-label">Username</label>
+                    <label class="input-label" for="lUser">Username</label>
                     <input type="text" id="lUser" placeholder="Enter username" autocomplete="off">
                 </div>
                 <div class="input-field-group">
-                    <label class="input-label">Password</label>
+                    <label class="input-label" for="lPass">Password</label>
                     <div class="password-wrapper">
                         <input type="password" id="lPass" placeholder="Enter password">
-                        <button type="button" class="eye-btn" onclick="togglePasswordVisibility('lPass')">👁️</button>
+                        <button type="button" class="eye-btn" data-toggle-password="lPass">👁️</button>
                     </div>
                 </div>
-                <button class="btn-primary" onclick="handleLogin()">Login</button>
-                <p class="auth-toggle-text">New student? <span onclick="showAuthPage('signup')">Sign Up</span></p>
+                <button class="btn-primary" data-action="handleLogin">Login</button>
+                <p class="auth-toggle-text">New student? <span data-show-auth="signup">Sign Up</span></p>
             </div>
-
             <div id="signupForm" class="hidden">
                 <h1 class="auth-header">SIGN UP</h1>
                 <div class="input-field-group">
-                    <label class="input-label">Username</label>
+                    <label class="input-label" for="sUser">Username</label>
                     <input type="text" id="sUser" placeholder="Create username" autocomplete="off">
                 </div>
                 <div class="input-field-group">
-                    <label class="input-label">Password</label>
+                    <label class="input-label" for="sPass">Password</label>
                     <div class="password-wrapper">
                         <input type="password" id="sPass" placeholder="Create password">
-                        <button type="button" class="eye-btn" onclick="togglePasswordVisibility('sPass')">👁️</button>
+                        <button type="button" class="eye-btn" data-toggle-password="sPass">👁️</button>
                     </div>
                 </div>
                 <div class="input-field-group">
                     <label class="input-label">Gender</label>
                     <div class="gender-selection">
-                        <label class="input-label"><input type="radio" name="sGender" value="male" checked>Male</label>
-                        <label class="input-label"><input type="radio" name="sGender" value="female">Female</label>
+                        <label class="input-label"><input type="radio" name="sGender" value="male" checked> Male</label>
+                        <label class="input-label"><input type="radio" name="sGender" value="female"> Female</label>
                     </div>
                 </div>
                 <div class="input-field-group">
-                    <label class="input-label">Grade</label>
+                    <label class="input-label" for="sGrade">Grade</label>
                     <select id="sGrade">
                         <option value="" disabled selected>Select Grade</option>
                         <option value="7">Grade 7</option>
@@ -58,8 +56,8 @@
                         <option value="9">Grade 9</option>
                     </select>
                 </div>
-                <button class="btn-primary" onclick="handleSignup()">Create Account</button>
-                <p class="auth-toggle-text">Back to <span onclick="showAuthPage('login')">Login</span></p>
+                <button class="btn-primary" data-action="handleSignup">Create Account</button>
+                <p class="auth-toggle-text">Back to <span data-show-auth="login">Login</span></p>
             </div>
         </div>
     </div>
@@ -67,10 +65,16 @@
     <div id="appLayer" class="hidden">
         <header class="app-header">
             <div class="header-left">
-                <img src="Logo.png" class="header-logo">
+                <img src="Logo.png" class="header-logo" alt="App Logo">
                 <span class="header-title">LearningIsFun - BETA</span>
             </div>
-            <div class="header-right" onclick="navigateTo('vProfile', document.getElementById('nav-settings'))">
+            <div class="lang-switch-container" style="padding: 10px; text-align: right;">
+                <select id="app-language-toggle" onchange="toggleAppLanguage(this.value)" style="background: #1a1a1a; color: #fff; border: 1px solid var(--border, #333); padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                    <option value="en">English</option>
+                    <option value="kh">ភាសាខ្មែរ (BETA)</option>
+                </select>
+            </div>
+            <div class="header-right" data-nav="vProfile" data-nav-tab="nav-settings">
                 <span id="userNameHeader">STUDENT</span>
                 <div id="userAvatarHeader" class="header-avatar">👤</div>
             </div>
@@ -81,43 +85,44 @@
                 <div class="slider-container" id="sliderContainer">
                     <div class="slider-track" id="sliderTrack">
                         <div class="slide slide-one">
-                            <div class="slide-info">
-                                <h2>Enrollment 2026</h2>
-                                <p>Unlock your potential at NGS Preah Yukunthor High School. The Entrance Exam starts soon.</p>
-                            </div>
+                            <h2>Enrollment 2026</h2>
+                            <p>Unlock your potential at NGS Preah Yukunthor High School. The Entrance Exam starts soon.</p>
                         </div>
                         <div class="slide slide-two">
-                            <div class="slide-info">
-                                <h2>Character Quest</h2>
-                                <p>Earn points to customize your avatar and theme!</p>
-                            </div>
+                            <h2 style="color: white;">Character Quest</h2>
+                            <p style="color: white;">Earn points to customize your avatar and theme!</p>
+                        </div>
+                        <div class="slide slide-three">
+                            <h2 style="color: white;">App In Development</h2>
+                            <p style="color: white;">We are currently testing and running our app as much as possible. Please report if there's bugs or errors. Thank You!</p>
                         </div>
                     </div>
                     <div class="slider-navigation">
-                        <span class="slider-dot active" onclick="manualSlide(0)"></span>
-                        <span class="slider-dot" onclick="manualSlide(1)"></span>
+                        <span class="slider-dot active" data-slide="0"></span>
+                        <span class="slider-dot" data-slide="1"></span>
+                        <span class="slider-dot" data-slide="2"></span>
                     </div>
                 </div>
 
                 <div class="grid-menu">
-                    <div class="grid-item" onclick="navigateTo('vProfile')">
+                    <div class="grid-item" data-nav="vProfile">
                         <div class="grid-icon bg-blue">👤</div>
                         <span class="grid-text">Avatar</span>
                     </div>
-                    <div class="grid-item" onclick="navigateTo('vEbooks')">
+                    <div class="grid-item" data-nav="vEbooks">
                         <div class="grid-icon bg-gold">📚</div>
                         <span class="grid-text">E-Books (v1.0)</span>
                     </div>
-                    <div class="grid-item">
-                        <div class="grid-icon bg-cyan" onclick="navigateTo('vExercise')">📝</div>
+                    <div class="grid-item" data-nav="vExercise">
+                        <div class="grid-icon bg-cyan">📝</div>
                         <span class="grid-text">Exercises (v1.0)</span>
                     </div>
-                    <div class="grid-item">
+                    <div class="grid-item" data-nav="vQuiz">
                         <div class="grid-icon bg-purple">🧪</div>
-                        <span class="grid-text">Quiz (Unavaliable AI generator)</span>
+                        <span class="grid-text">Quiz (Work In Progress)</span>
                     </div>
-                    <div class="grid-item">
-                        <div class="grid-icon bg-purple" onclick="navigateTo('vGames')">🎮</div>
+                    <div class="grid-item" data-nav="vGames">
+                        <div class="grid-icon bg-purple">🎮</div>
                         <span class="grid-text">Fun Games (Work In Progress)</span>
                     </div>
                 </div>
@@ -126,11 +131,9 @@
             <section id="vProfile" class="view">
                 <div class="profile-main-card">
                     <div class="point-badge">✨ <span id="userPointsDisplay">0</span> PTS</div>
-                    <div class="avatar-container" id="avatarDisplay user-avatar">
-                        <img src="crown.png" id="charEffect" class="crown-overlay hidden" alt="Crown">
-                        <img src="man.png" class="avatar-layer" id="charBase">
-                        <img src="" class="avatar-layer hidden" id="charOutfit">
-                        <img src="" class="avatar-layer hidden" id="charEffect">
+                    <div id="avatarDisplay" class="avatar-container">
+                        <img src="man.png" class="avatar-layer" id="charBase" alt="Avatar Base">
+                        <img src="" class="avatar-layer hidden" id="charOutfit" alt="Avatar Outfit">
                     </div>
                     <h2 id="profileNameDisplay">Username</h2>
                     <div class="profile-data-grid">
@@ -143,8 +146,8 @@
 
             <section id="vSettings" class="view">
                 <h1 class="section-header">Menu</h1>
-                <div class="setting-list">
-                    <div class="setting-item clickable-setting" onclick="navigateTo('vShop')">
+                <div class="settings-list">
+                    <div class="setting-item" data-nav="vShop">
                         <div class="setting-left">
                             <div class="setting-icon-box shop-bg">🛒</div>
                             <div class="setting-info">
@@ -154,7 +157,6 @@
                         </div>
                         <span class="arrow-indicator">❯</span>
                     </div>
-
                     <div class="setting-item">
                         <div class="setting-left">
                             <div class="setting-icon-box notify-bg">🔔</div>
@@ -165,8 +167,7 @@
                         </div>
                         <input type="checkbox" class="ios-switch" checked>
                     </div>
-
-                    <div class="setting-item logout-item" onclick="openLogoutDialog()">
+                    <div class="setting-item logout-item" data-action="openLogoutDialog">
                         <div class="setting-left">
                             <div class="setting-icon-box logout-bg">🚪</div>
                             <div class="setting-info">
@@ -179,108 +180,161 @@
             </section>
 
             <section id="vShop" class="view">
-                <div class="back-navigation" onclick="navigateTo('vSettings')">
+                <div class="back-navigation" data-nav="vSettings">
                     <span class="back-arrow">❮</span>
                     <span>Back to Settings</span>
                 </div>
                 <div class="shop-balance-pill">✨ <span id="shopPointsDisplay">0</span></div>
-                
                 <h1 class="section-header">Point Shop</h1>
-                
                 <div class="shop-grid">
-                    <div class="shop-item theme-card">
+                    <div class="shop-item">
                         <div class="shop-icon">🔴</div>
-                        <h4>Crimson Void</h4>
-                        <p class="shop-price">Cost: 500 Points</p>
-                        <button class="theme-btn" onclick="handleThemeAction('red_theme', 500)" id="btn-red_theme">Buy Theme</button>
+                        <div>
+                            <h4>Crimson Void</h4>
+                            <p class="shop-price">Cost: 500 Points</p>
+                        </div>
+                        <button class="theme-btn" data-buy-theme="red_theme" data-cost="500" id="btn-red_theme">Buy Theme</button>
                     </div>
-                    <div class="shop-item theme-card">
+
+                    <div class="shop-item">
                         <div class="shop-icon">✨</div>
-                        <h4>Mystical Golden Aura (Temporary Unavaliable)</h4>
-                        <p class="shop-price">Cost: 500 Points</p>
-                        <button class="theme-btn" id="btn-gold_glow" onclick="">-----</button>
+                        <div>
+                            <h4>Mystical Golden Aura</h4>
+                            <p class="shop-price">Cost: ??? Points</p>
+                        </div>
+                        <button class="theme-btn">Disabled</button>
                     </div>
-                    <div class="shop-item theme-card">
-                        <div class="shop-icon">👑</div>
-                        <h4>Legendary Crown</h4>
-                        <p class="shop-price">Cost: 1000 Points</p>
-                        <button class="theme-btn" id="btn-crown" onclick="handleItemAction('crown', 1000)">Buy Accessory</button>
+
+                    <div class="shop-item">
+                        <div class="shop-icon">🎯</div>
+                        <div>
+                            <h4>Custom Cursor</h4>
+                            <p class="shop-price">Cost: 1000 Points</p>
+                        </div>
+                        <button class="theme-btn" data-buy-item="custom_cursor" data-cost="1000" id="btn-custom_cursor">Buy Cursor</button>
                     </div>
-                    <div class="item-card shop-item bonus-item" onclick="addPoints(100, 'Daily Bonus')">
+
+                    <div class="shop-item">
                         <div class="shop-icon">🎁</div>
-                        <span id="claimTimer">Loading timer:</span>
-                        <button class="theme-btn" id="dailyBtn" onclick="handleDailyClaim()">Claim 100 PTS</button>
+                        <div>
+                            <h4>Daily Bonus</h4>
+                            <p class="shop-price"><span id="claimTimer">Loading timer</span></p>
+                        </div>
+                        <button class="theme-btn" id="dailyBtn" data-action="handleDailyClaim">Claim 100 PTS</button>
                     </div>
                 </div>
             </section>
 
-            <section id="vAbroad" class="view"><h1 class="section-header">Study Abroad</h1></section>
-            <section id="vSaved" class="view">
-                <div class="view-header" style="text-align: center; padding: 20px;">
-                    <h1 class="auth-header">ONLINE LIBRARY (BETA)</h1>
-                    <p style="opacity:0.6; font-size:0.8rem;">PASTE LINK TO SAVE VIDEO</p>
+            <section id="vAbroad" class="view">
+                <h1 class="section-header">All About Us</h1>
+    
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border, #333); border-radius: 12px; padding: 30px; margin-bottom: 25px; text-align: center;">
+                    <h2 style="color: var(--primary, #00d4ff); margin-top: 0; margin-bottom: 12px; font-size: 1.8rem;">Our Vision & Mission</h2>
+                    <p style="color: #aaa; max-width: 650px; margin: 0 auto; line-height: 1.6; font-size: 15px;">
+                        We are dedicated to building interactive, high-performance web systems and gaming simulators. By combining elegant styling matrices with robust programmatic engines, we deliver exceptional software solutions. We make learning enjoyable again!
+                    </p>
                 </div>
 
-                <div class="ai-quiz-card" style="margin: 0 20px 20px 20px; border: 1px solid var(--accent);">
-                    <input type="text" id="videoUrlInput" placeholder="Paste YouTube link here..." 
-                        style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid #444; color: white; border-radius: 8px; margin-bottom: 10px;">
+                <h3 style="color: #fff; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">Our Team</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px;">
         
-                    <input type="text" id="videoTitleInput" placeholder="Video Title (e.g. Math Lesson 1)" 
-                        style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid #444; color: white; border-radius: 8px; margin-bottom: 15px;">
-        
-                    <button class="btn-primary" onclick="processAndSaveVideo()" 
-                            style="width: 100%; padding: 12px; border-radius: 8px; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; border: none;">
-                        FETCH & SAVE VIDEO
-                    </button>
+                    <div style="background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <div style="width: 70px; height: 70px; background: var(--primary, #00d4ff); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 15px auto; box-shadow: 0 0 15px rgba(0,212,255,0.2);">
+                            <img src="photo_2026-01-26_20-53-11.jpg" alt="">
+                        </div>
+                        <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 1.2rem;">Rattanak SOK</h4>
+                        <span style="color: var(--primary, #00d4ff); font-size: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Programmer / Developer</span>
+                        <p style="color: #888; font-size: 13px; margin: 10px 0 0 0; line-height: 1.4;">Developed most of the working systems. Brought Ideas Into Code (Mostly). Lacks sleep from it.</p>
+                    </div>
+
+                    <div style="background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <div style="width: 70px; height: 70px; background: #e74c3c; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 15px auto; box-shadow: 0 0 15px rgba(231,76,60,0.2);">
+                            <img src="photo_2026-06-25_21-51-32.jpg" alt="">
+                        </div>
+                        <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 1.2rem;">ChhengHok LIM</h4>
+                        <span style="color: #e74c3c; font-size: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Graphics and Theme Designer</span>
+                        <p style="color: #888; font-size: 13px; margin: 10px 0 0 0; line-height: 1.4;">Helps design the themes. Bug fixes and error patcher. The posters are his work of art.</p>
+                    </div>
+
+                    <div style="background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <div style="width: 70px; height: 70px; background: #e74c3c; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 15px auto; box-shadow: 0 0 15px rgba(231,76,60,0.2);">
+                            <img src="photo_2026-06-25_21-56-03.jpg" alt="">
+                        </div>
+                        <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 1.2rem;">Puthiriech SOKHOM</h4>
+                        <span style="color: #e74c3c; font-size: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Brainstormer and Editor</span>
+                        <p style="color: #888; font-size: 13px; margin: 10px 0 0 0; line-height: 1.4;">Brought up the ideas. Brainstorms the solutions. Navigated Bugs and Errors.</p>
+                    </div>
+
                 </div>
 
-                <div id="savedContainer" style="padding: 0 20px 100px 20px;"></div>
+                <h3 style="color: #fff; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">⚡ Operational Pillars</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div style="background: rgba(255,255,255,0.02); border-left: 4px solid var(--primary, #00d4ff); padding: 15px; border-radius: 0 8px 8px 0;">
+                        <strong style="color: #fff; display: block; margin-bottom: 4px;">Performance Matrix</strong>
+                        <span style="color: #888; font-size: 13px;">Optimizing scripts for sub-millisecond execution loops and fast renders.</span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border-left: 4px solid #f1c40f; padding: 15px; border-radius: 0 8px 8px 0;">
+                        <strong style="color: #fff; display: block; margin-bottom: 4px;">Fluid Interactivity</strong>
+                        <span style="color: #888; font-size: 13px;">Replacing standard static controls with real-time responsive gaming assets.</span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border-left: 4px solid #00ff88; padding: 15px; border-radius: 0 8px 8px 0;">
+                        <strong style="color: #fff; display: block; margin-bottom: 4px;">Data Consistency</strong>
+                        <span style="color: #888; font-size: 13px;">Preserving player states, currency shop inventory, and cooldown logs securely.</span>
+                    </div>
+                </div>
             </section>
+            
+            <section id="vSaved" class="view">
+                <div class="view-header" style="text-align:center;">
+                    <h1 class="auth-header">ONLINE LIBRARY (BETA)</h1>
+                    <p style="opacity:.6; font-size:.8rem;">PASTE LINK TO SAVE VIDEO</p>
+                </div>
+                <div class="card-panel">
+                    <input class="text-input" type="text" id="videoUrlInput" placeholder="Paste YouTube link here...">
+                    <input class="text-input" type="text" id="videoTitleInput" placeholder="Video Title (e.g. Math Lesson 1)">
+                    <button class="btn-primary" data-action="processAndSaveVideo">FETCH & SAVE VIDEO</button>
+                </div>
+                <div id="savedContainer" style="padding:0 20px 100px 20px;"></div>
+            </section>
+
             <section id="vReader" class="view">
-                <div class="back-navigation" onclick="navigateTo('vEbooks')">
+                <div class="back-navigation" data-nav="vEbooks">
                     <span class="back-arrow">❮</span> Back to Library
                 </div>
                 <h1 id="readerTitle" class="section-header">Reading...</h1>
-                <div id="bookContent" class="reader-content-box">
-                    </div>
+                <div id="bookContent" class="reader-content-box"></div>
             </section>
 
             <section id="vEbooks" class="view">
                 <h1 class="section-header">Smart Library</h1>
-    
                 <div class="search-container">
-                    <input type="text" id="ebookSearch" placeholder="Search topics..." onkeyup="searchTopics()">
-                    <button class="search-btn" onclick="searchTopics()">🔍</button>
+                    <input class="text-input" type="text" id="ebookSearch" placeholder="Search topics..." onkeyup="searchTopics()">
+                    <button class="search-btn" data-action="searchTopics">🔍</button>
                 </div>
-
                 <div id="subjectLibrary" class="grid-menu">
-                    <div class="grid-item" onclick="openSubject('Math')">
+                    <div class="grid-item" data-open-subject="Math">
                         <div class="grid-icon bg-blue">➕</div>
                         <span class="grid-text">Mathematics</span>
                     </div>
-                    <div class="grid-item" onclick="openSubject('Physics')">
+                    <div class="grid-item" data-open-subject="Physics">
                         <div class="grid-icon bg-cyan">⚛️</div>
                         <span class="grid-text">Physics</span>
                     </div>
-
-                    <div class="grid-item" onclick="openSubject('Chemistry')">
+                    <div class="grid-item" data-open-subject="Chemistry">
                         <div class="grid-icon bg-purple">🧪</div>
                         <span class="grid-text">Chemistry</span>
                     </div>
-
-                    <div class="grid-item" onclick="openSubject('Biology')">
+                    <div class="grid-item" data-open-subject="Biology">
                         <div class="grid-icon bg-green">🌿</div>
                         <span class="grid-text">Biology</span>
                     </div>
-
-                    <div class="grid-item" onclick="openSubject('Earth Science')">
+                    <div class="grid-item wide" data-open-subject="Earth Science">
                         <div class="grid-icon bg-orange">🌍</div>
                         <span class="grid-text">Earth Science</span>
                     </div>
                 </div>
-
                 <div id="topicView" class="hidden">
-                    <div class="back-navigation" onclick="closeTopicView()">
+                    <div class="back-navigation" data-action="closeTopicView">
                         <span class="back-arrow">❮</span> Back to Subjects
                     </div>
                     <h2 id="activeSubjectDisplay">Mathematics</h2>
@@ -290,141 +344,182 @@
 
             <section id="vQuiz" class="view hidden">
                 <div class="quiz-interface-header">
-                    <button onclick="navigateTo('vHome')">Back</button>
+                    <button data-nav="vHome" class="learn-btn">Back</button>
                     <div class="ai-branding">
                         <div class="ai-pulse-ring"></div>
                         <span class="ai-name">QUIZ-BOT v1.0</span>
                     </div>
                 </div>
                 <div class="quiz-scroll-container">
-                    <div id="quizContainer"></div> 
+                    <div id="quizContainer">
+                        <h5>*Complete a Lesson in Ebooks to unlock 2 true/false questions.*</h5>
+                    </div>
                 </div>
             </section>
-            <section id="vExercise" class="view">
-                <div class="view-header" style="text-align: center; padding: 10px 0 20px 0;">
-                    <h1 class="auth-header" style="margin-bottom: 5px; color: var(--accent);">STUDENT EXERCISES</h1>
-                    <p style="opacity: 0.6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Choose category to explore structured files</p>
-                </div>
 
-                <div id="exerciseCategories" class="grid-menu" style="margin-bottom: 25px;">
-                    <div class="grid-item" onclick="selectExerciseCategory('Math')">
+            <section id="vExercise" class="view">
+                <div class="view-header" style="text-align:center;">
+                    <h1 class="auth-header" style="margin-bottom:5px; color: var(--accent);">STUDENT EXERCISES</h1>
+                    <p style="opacity:.6; font-size:.8rem; text-transform:uppercase; letter-spacing:.5px;">Choose category to explore structured files</p>
+                </div>
+                <div id="exerciseCategories" class="grid-menu" style="margin-bottom:25px;">
+                    <div class="grid-item" data-select-exercise="Math">
                         <div class="grid-icon bg-blue">📐</div>
                         <span class="grid-text">Mathematics</span>
                     </div>
-                    <div class="grid-item" onclick="selectExerciseCategory('Physics')">
+                    <div class="grid-item" data-select-exercise="Physics">
                         <div class="grid-icon bg-cyan">⚡</div>
                         <span class="grid-text">Physics</span>
                     </div>
-                    <div class="grid-item" onclick="selectExerciseCategory('Chemistry')">
+                    <div class="grid-item" data-select-exercise="Chemistry">
                         <div class="grid-icon bg-purple">🧪</div>
                         <span class="grid-text">Chemistry</span>
                     </div>
-                    <div class="grid-item" onclick="selectExerciseCategory('Biology')">
+                    <div class="grid-item" data-select-exercise="Biology">
                         <div class="grid-icon bg-gold">🌿</div>
                         <span class="grid-text">Biology</span>
                     </div>
-                    <div class="grid-item" onclick="selectExerciseCategory('Earth Science')" style="grid-column: span 2;">
-                        <div class="grid-icon" style="color: #2ecc71; text-shadow: 0 0 15px rgba(46,204,113,0.4);">🌍</div>
+                    <div class="grid-item wide" data-select-exercise="Earth Science">
+                        <div class="grid-icon bg-green">🌍</div>
                         <span class="grid-text">Earth Science</span>
                     </div>
                 </div>
-
                 <div id="exerciseTiersView" class="hidden">
-                    <button class="learn-btn" onclick="backToExerciseCategories()" style="margin-bottom: 15px; padding: 8px 16px; font-size: 0.8rem; background: rgba(255,255,255,0.08);">
-                        ← Back to Categories
-                    </button>
-                    <h2 id="currentExerciseSubject" style="font-weight: 800; font-size: 1.4rem; margin-bottom: 20px; color: var(--accent);"></h2>
-        
-                    <div id="tiersContainer">
-                        </div>
-                </div>
-            </section>
-            <section id="vGames" class="view hidden" style="padding: 20px;">
-                <div style="background: linear-gradient(135deg, #111, #1e1e30); padding: 30px; border-radius: 16px; border: 1px solid #333; text-align: center; margin-bottom: 25px;">
-                    <h1 style="color: var(--accent); font-size: 2.2rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">🕹️ ACADEMIC ARCADE</h1>
-                    <p style="opacity: 0.7; font-size: 0.95rem;">Test your knowledge, beat the clock, and earn wallet point rewards!</p>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between;">
-                        <div>
-                            <h3 style="color: #00ff88; margin-top: 0; font-size: 1.3rem; margin-bottom: 8px;">⚡ Quick Reaction</h3>
-                            <p style="font-size: 0.88rem; opacity: 0.7; line-height: 1.5; margin-bottom: 20px;">
-                                Perfect for calculating disciplines like <b>Math, Chemistry, and Physics</b>. Solve rapid-fire multiple-choice problems before time expires!
-                            </p>
-                        </div>
-                        <button class="ex-btn ex-btn-accent" style="width: 100%; padding: 12px; font-weight: 800;" `onclick="handleQuickReactionEntry()"`>Enter (Unavaliable Right Now)</button>
-                    </div>
-
-                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; opacity: 0.6;">
-                        <div>
-                            <h3 style="color: #f1c40f; margin-top: 0; font-size: 1.3rem; margin-bottom: 8px;">🧩 Crosswords</h3>
-                            <p style="font-size: 0.88rem; opacity: 0.7; line-height: 1.5; margin-bottom: 20px;">
-                                Tailored for descriptive modules like <b>Biology and Earth Science</b>. Find vocabulary words that match scientific definitions. (Coming SOON)
-                            </p>
-                        </div>
-                        <button class="ex-btn" style="width: 100%; padding: 12px; font-weight: 800; background: #222; cursor: not-allowed;" disabled>Coming Soon</button>
-                    </div>
+                    <button class="learn-btn" data-action="backToExerciseCategories">← Back to Categories</button>
+                    <h2 id="currentExerciseSubject" style="font-weight:800; font-size:1.4rem; margin-bottom:20px; color: var(--accent);"></h2>
+                    <div id="tiersContainer"></div>
                 </div>
             </section>
 
-            <section id="QuickReactionLobbyView" class="view hidden" style="padding: 20px; max-width: 600px; margin: 0 auto;">
-                <button class="ex-btn ex-btn-secondary" style="margin-bottom: 20px; padding: 8px 16px;" onclick="navigateTo('vGames')">← Back to Arcade</button>
+            <section id="vGames" class="view hidden" style="padding:20px;">
+                <div class="info-card" style="margin-bottom:25px;">
+                    <h1 style="color: var(--accent); font-size:2.2rem; font-weight:800; letter-spacing:1px; margin-bottom:8px;">🕹️ ACADEMIC ARCADE</h1>
+                    <p>Test your knowledge, beat the clock, and earn wallet point rewards!</p>
+                </div>
+                <div class="grid-menu" style="grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap:20px;">
+                    <div class="info-card">
+                        <h3 style="color:#00ff88; margin-bottom:12px;">⚡ Quick Reaction</h3>
+                        <p>Perfect for calculating disciplines like Math, Chemistry, and Physics. Solve rapid-fire multiple-choice problems before time expires!</p>
+                        <button class="ex-btn ex-btn-accent" data-action="handleQuickReactionEntry">Enter (BETA)</button>
+                    </div>
+                    <div class="info-card" id="crossword-lobby-card" style="opacity: 1; cursor: default;">
+                        <h3 style="color:#f1c40f; margin-bottom:12px;">🧩 Crosswords</h3>
+                        <p>Tailored for descriptive modules. Drag or click letters to match vocabulary words with scientific definitions.</p>
     
-                <div style="background: #111; border: 1px solid #222; padding: 25px; border-radius: 12px;">
-                    <h2 style="color: #00ff88; margin-top: 0; font-weight: 800; margin-bottom: 20px;">Setup Arena Parameters</h2>
+                        <div style="margin: 15px 0; display: flex; gap: 10px; align-items: center;">
+                            <label for="cw-subject-select" style="font-weight: 600; font-size: 14px;">Select Subject:</label>
+                            <select id="cw-subject-select" style="padding: 6px 12px; background: #2c3e50; color: white; border: 1px solid #34495e; border-radius: 6px; cursor: pointer; min-width: 140px;"></select>
+                        </div>
+                        <button class="ex-btn" onclick="startCrosswordGame()">Play Now</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="QuickReactionLobbyView" class="view hidden" style="padding:20px; max-width:600px; margin:0 auto;">
+                <button class="learn-btn" data-nav="vGames">← Back to Arcade</button>
+                <div class="info-card" style="padding:25px;">
+                    <h2 style="color:#00ff88; margin-bottom:20px;">Setup Arena Parameters</h2>
         
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; opacity: 0.9;">1. SELECT SUBJECT:</label>
-                    <select id="qr-subject-select" style="width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; margin-bottom: 20px; font-family: inherit;">
+                    <label style="display:block; font-size:.85rem; font-weight:600; margin-bottom:8px; opacity:.9;">1. SELECT SUBJECT:</label>
+                    <select id="qr-subject-select" class="text-input" style="margin-bottom:20px;">
                         <option value="Math">Math</option>
                         <option value="Physics">Physics</option>
                         <option value="Chemistry">Chemistry</option>
                     </select>
 
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; opacity: 0.9;">2. SELECT TIME LIMIT:</label>
-                    <select id="qr-time-select" style="width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; margin-bottom: 25px; font-family: inherit;">
+                    <label style="display:block; font-size:.85rem; font-weight:600; margin-bottom:8px; opacity:.9;">2. SELECT DIFFICULTY:</label>
+                    <select id="qr-difficulty-select" class="text-input" style="margin-bottom:20px;">
+                        <option value="easy">Easy (5 PTS / correct)</option>
+                        <option value="medium">Medium (25 PTS / correct)</option>
+                        <option value="hard">Hard (100 PTS / correct)</option>
+                    </select>
+        
+                    <label style="display:block; font-size:.85rem; font-weight:600; margin-bottom:8px; opacity:.9;">3. SELECT TIME LIMIT:</label>
+                    <select id="qr-time-select" class="text-input" style="margin-bottom:25px;">
                         <option value="30">30 Seconds</option>
                         <option value="60">60 Seconds</option>
                         <option value="90">90 Seconds</option>
                     </select>
-
-                    <button class="ex-btn ex-btn-accent" style="width: 100%; padding: 14px; font-weight: 800; font-size: 1rem;" onclick="startQuickReactionGame()">START GAME⚡</button>
+                    <button class="ex-btn ex-btn-accent" data-action="startQuickReactionGame">START GAME⚡</button>
                 </div>
             </section>
 
-            <section id="QuickReactionGameView" class="view hidden" style="padding: 20px; max-width: 700px; margin: 0 auto; text-align: center;">
-                <div style="display: flex; justify-content: space-between; background: #111; padding: 15px 25px; border-radius: 10px; border: 1px solid #222; margin-bottom: 25px;">
-                    <div style="font-size: 1.1rem; font-weight: 700;">Time Left: <span id="qr-timer-display" style="color: #ff4d4d; font-family: monospace;">00</span>s</div>
-                    <div style="font-size: 1.1rem; font-weight: 700;">Session Record: <span id="qr-running-score" style="color: #00ff88; font-family: monospace;">0</span> pts</div>
+            <section id="QuickReactionGameView" class="view hidden" style="padding:20px; max-width:700px; margin:0 auto; text-align:center;">
+                <div class="info-card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+                    <div style="font-size:1.1rem; font-weight:700;">Time Left: <span id="qr-timer-display" style="color:#ff4d4d; font-family:monospace;">00</span>s</div>
+                    <div style="font-size:1.1rem; font-weight:700;">Session Record: <span id="qr-running-score" style="color:#00ff88; font-family:monospace;">0</span> pts</div>
                 </div>
-
-                <div id="qr-freeze-banner" class="hidden" style="background: rgba(255, 77, 77, 0.15); border: 1px solid #ff4d4d; color: #ff4d4d; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.5px;">
-                    ⚠️ INCORRECT EXEGESIS PENALTY! SYSTEM LOCKED FOR <span id="qr-freeze-countdown">3</span>s...
+                <div id="qr-freeze-banner" class="hidden" style="background: rgba(255,77,77,.15); border:1px solid #ff4d4d; color:#ff4d4d; padding:12px; border-radius:8px; margin-bottom:20px; font-weight:700; font-size:.9rem; letter-spacing:.5px;">
+                    ⚠️ INCORRECT ANSWER, PENALTY APPLIED! SYSTEM LOCKED FOR <span id="qr-freeze-countdown">3</span>s...
                 </div>
-
-                <div style="background: #0b0b0f; border: 1px solid #222; padding: 35px; border-radius: 12px; min-height: 150px; display: flex; align-items: center; justify-content: center; margin-bottom: 25px;">
-                    <h2 id="qr-question-text" style="margin: 0; line-height: 1.4; font-size: 1.4rem; font-weight: 600;">Generating Problem Node...</h2>
+                <div class="info-card" style="min-height:150px; display:flex; align-items:center; justify-content:center; margin-bottom:25px;">
+                    <h2 id="qr-question-text" style="margin:0; line-height:1.4; font-size:1.4rem; font-weight:600;">Generating Problem Node...</h2>
                 </div>
+                <div id="qr-options-box" class="grid-menu" style="grid-template-columns: repeat(2,minmax(0,1fr)); gap:15px;"></div>
+            </section>
 
-                <div id="qr-options-box" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <section id="CrosswordGameView" class="view-panel hidden" style="max-width: 1100px; margin: 0 auto; padding: 15px; color: white; font-family: system-ui, sans-serif;">
+    
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 12px 20px; border-radius: 8px; margin-bottom: 12px; border-bottom: 3px solid #34495e;">
+                    <div>
+                        <h3 id="cw-game-subject" style="margin: 0; font-size: 16px; color: #f1c40f;">Category: Loading...</h3>
                     </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="text-align: right;">
+                            <span id="cw-stopwatch" style="font-size: 20px; font-weight: bold; font-family: monospace; color: #2ecc71;">00:00</span>
+                        </div>
+                        <button class="ex-btn" style="background: #e74c3c; padding: 6px 12px; margin: 0; font-size: 13px;" onclick="exitCrosswordMatch()">🏳️ Leave</button>
+                    </div>
+                </div>
+
+                <div id="cw-active-clue-banner" style="background: #f1c40f; color: #1a252f; padding: 12px 16px; border-radius: 8px; font-weight: bold; font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-left: 6px solid #d4ac0d;">
+                    <span>🔍</span> <span id="cw-active-clue-text">Select any box grid square or clue item to begin.</span>
+                </div>
+
+                <div class="cw-split-container">
+        
+                    <div class="cw-grid-wrapper">
+                        <div id="crossword-matrix-board">
+                            </div>
+                    </div>
+
+                    <div class="cw-clues-sidebar">
+                        <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #f1c40f; border-bottom: 2px solid #34495e; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Clues</h3>
+            
+                        <div class="cw-clue-section-header">ACROSS</div>
+                        <div id="cw-across-clues-container" class="cw-clues-scroller">
+                            </div>
+
+                        <div class="cw-clue-section-header" style="margin-top: 15px;">DOWN</div>
+                        <div id="cw-down-clues-container" class="cw-clues-scroller">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="cw-keyboard-rack" style="margin-top: 15px; background: #2c3e50; border-radius: 8px; padding: 15px; border: 1px solid #34495e;">
+                    <h4 style="margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase; color: #a6b8c7; letter-spacing: 0.5px; text-align: center;">
+                        ⌨️ Input System (Select a grid square, then tap a key below)
+                    </h4>
+                    <div id="cw-keyboard-container" style="display: flex; flex-direction: column; gap: 8px; align-items: center; user-select: none;">
+                        </div>
+                </div>
             </section>
         </div>
 
         <nav class="bottom-nav">
-            <div class="nav-tab active" id="tab-vHome" onclick="navigateTo('vHome', this)">
+            <div class="nav-tab active" id="tab-vHome" data-nav="vHome">
                 <span class="nav-icon">🏠</span>
                 <span class="nav-label">Home</span>
             </div>
-            <div class="nav-tab" id="tab-vAbroad">
-                <span class="nav-icon">✈️</span>
-                <span class="nav-label">Abroad (Disabled)</span>
+            <div class="nav-tab" id="tab-vAbroad" data-nav="vAbroad">
+                <span class="nav-icon">ℹ️</span>
+                <span class="nav-label">About Us</span>
             </div>
-            <div class="nav-tab" id="tab-vSaved" onclick="navigateTo('vSaved', this)">
+            <div class="nav-tab" id="tab-vSaved" data-nav="vSaved">
                 <span class="nav-icon">🔖</span>
                 <span class="nav-label">Saved Library</span>
             </div>
-            <div class="nav-tab" id="nav-settings" onclick="navigateTo('vSettings', this)">
+            <div class="nav-tab" id="nav-settings" data-nav="vSettings">
                 <span class="nav-icon">⚙️</span>
                 <span class="nav-label">Menu</span>
             </div>
@@ -434,36 +529,31 @@
     <div id="custom-alert" class="modal-overlay hidden">
         <div class="modal-box">
             <div id="modal-content">Message goes here...</div>
-            <button class="agree-btn" onclick="hideAlert()">Agreed</button>
+            <button class="agree-btn" data-action="hideAlert">Agreed</button>
         </div>
     </div>
 
-    <div id="logoutModal" class="hidden">
+    <div id="logoutModal" class="modal-overlay hidden">
         <div class="logout-box">
             <h2>Are you sure you want to logout?</h2>
             <div class="logout-btn-group">
-                <button class="btn-confirm" onclick="confirmLogout(true)">Yes</button>
-                <button class="btn-cancel" onclick="confirmLogout(false)">No</button>
+                <button class="btn-confirm" data-confirm-logout="true">Yes</button>
+                <button class="btn-cancel" data-confirm-logout="false">No</button>
             </div>
         </div>
     </div>
 
-    <div id="exerciseConfirmModal" class="modal-overlay hidden" style="z-index: 10000;">
-    <div class="modal-box" style="border: 1px solid var(--accent); background: rgba(10, 15, 30, 0.95); backdrop-filter: blur(20px);">
-        <div style="font-size: 2.5rem; margin-bottom: 15px;">🪙</div>
-        <h2 style="color: var(--accent); font-weight: 800; margin-bottom: 10px; font-size: 1.3rem;">CONFIRM PURCHASE</h2>
-        
-        <div id="exerciseModalContent" style="font-size: 0.95rem; margin-bottom: 20px; line-height: 1.5; opacity: 0.9;">
+    <div id="exerciseConfirmModal" class="modal-overlay hidden" style="z-index:10000;">
+        <div class="modal-box" style="border:1px solid var(--accent); background:rgba(10,15,30,.95); backdrop-filter:blur(20px);">
+            <div style="font-size:2.5rem; margin-bottom:15px;">🪙</div>
+            <h2 style="color:var(--accent); font-weight:800; margin-bottom:10px; font-size:1.3rem;">CONFIRM PURCHASE</h2>
+            <div id="exerciseModalContent" style="font-size:.95rem; margin-bottom:20px; line-height:1.5; opacity:.9;"></div>
+            <div class="logout-btn-group" style="display:flex; gap:10px; justify-content:center;">
+                <button id="exerciseConfirmYesBtn" class="btn-confirm" style="flex:1; padding:12px; font-weight:800;">Confirm (-100 PTS)</button>
+                <button class="btn-cancel" style="flex:1; padding:12px; font-weight:800; background:rgba(255,255,255,.05);" data-action="closeExerciseModal">Cancel</button>
             </div>
-        
-        <div class="logout-btn-group" style="display: flex; gap: 10px; justify-content: center;">
-            <button id="exerciseConfirmYesBtn" class="btn-confirm" style="flex: 1; padding: 12px; font-weight: 800;">Confirm (-100 PTS)</button>
-            <button class="btn-cancel" style="flex: 1; padding: 12px; font-weight: 800; background: rgba(255,255,255,0.05);" onclick="closeExerciseModal()">Cancel</button>
         </div>
     </div>
-</div>
-
-
 
     <script src="script.js"></script>
 </body>
